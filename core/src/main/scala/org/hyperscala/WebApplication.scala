@@ -2,11 +2,13 @@ package org.hyperscala
 
 import pl.metastack.metarx.Sub
 
+import scala.language.experimental.macros
+
 abstract class WebApplication(host: String, port: Int) {
   protected var picklers = Vector.empty[Pickler[_]]
   protected var screens = Vector.empty[Screen]
 
-  def create[S <: Screen]: S = None.orNull.asInstanceOf[S]      // Use Macros
+  def create[S <: Screen]: S = macro Macros.screen[S]
 
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit = synchronized {
     val position = picklers.length

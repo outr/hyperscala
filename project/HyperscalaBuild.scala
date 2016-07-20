@@ -15,6 +15,7 @@ object HyperscalaBuild extends Build {
       libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
       libraryDependencies ++= Seq(
         "com.outr.scribe" %%% "scribe" % Dependencies.scribe,
+        "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
         "pl.metastack" %%% "metarx" % Dependencies.metaRx,
         "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
       ),

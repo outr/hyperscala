@@ -6,6 +6,10 @@ import pl.metastack.metarx.Channel
 object ExampleApplication extends WebApplication("localhost", 8080) {
   val login = create[LoginScreen]
   val dashboard = create[DashboardScreen]
+
+  override protected[hyperscala] def send(id: Int, json: String): Unit = {
+    // TODO: implement
+  }
 }
 
 trait LoginScreen extends Screen {

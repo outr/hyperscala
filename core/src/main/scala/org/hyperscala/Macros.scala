@@ -13,34 +13,48 @@ object Macros {
 
     c.Expr[Channel[T]](
       q"""
-          val pickler = new Pickler[$t](${c.prefix.tree}) {
-            override protected[hyperscala] def read(json: String): $t = upickle.default.read[$t](json)
-            override protected[hyperscala] def write(t: $t): String = upickle.default.write[$t](t)
+          val pickler = new org.hyperscala.Pickler[$t](${c.prefix.tree}) {
+            override def read(json: String): $t = upickle.default.read[$t](json)
+            override def write(t: $t): String = upickle.default.write[$t](t)
           }
           pickler.channel
        """
     )
   }
-}
 
-abstract class Pickler[T](val screen: Screen) {
-  private[hyperscala] val receiving = new ThreadLocal[Boolean] {
-    override def initialValue(): Boolean = false
-  }
+  def screen[S <: Screen](c: blackbox.Context)(implicit s: c.WeakTypeTag[S]): c.Expr[S] = {
+    import c.universe._
 
-  val id = screen.app.add(this)
-  val channel: Channel[T] = Channel[T]
-
-  protected[hyperscala] def read(json: String): T
-  protected[hyperscala] def write(t: T): String
-
-  private[hyperscala] def receive(json: String): Unit = {
-    val t = read(json)
-    receiving.set(true)
-    try {
-      channel := t
-    } finally {
-      receiving.set(false)
+    val isJS = try {
+      c.universe.rootMirror.staticClass("scala.scalajs.js.Any")
+      true
+    } catch {
+      case t: Throwable => false
     }
+
+    val typeString = s.tpe.toString
+    val (preType, postType) = if (typeString.indexOf('.') != -1) {
+      val index = typeString.indexOf('.')
+      (typeString.substring(0, index + 1) -> typeString.substring(index + 1))
+    } else {
+      "" -> typeString
+    }
+    val screenTypeString = if (isJS) {
+      s"${preType}Client$postType"
+    } else {
+      s"${preType}Server$postType"
+    }
+    val screenType = try {
+      c.universe.rootMirror.staticClass(screenTypeString)
+    } catch {
+      case exc: ScalaReflectionException => c.abort(c.enclosingPosition, s"Unable to find implementation trait $screenTypeString for $typeString.")
+    }
+    c.Expr[S](
+      q"""
+         val webApp = ${c.prefix.tree}
+         new $screenType {
+          override def app = webApp
+         }
+       """)
   }
 }
