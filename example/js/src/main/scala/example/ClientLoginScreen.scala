@@ -2,7 +2,7 @@ package example
 
 import com.outr.scribe.Logging
 import org.hyperscala.ClientScreen
-import org.scalajs.dom.html
+import org.scalajs.dom.{Event, html}
 
 trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
   // Change screen upon successful login
@@ -14,7 +14,8 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
   }
 
   // Configure form submit
-  lazy val form = lookupOrLoadById[html.Form]("form", parentId = "content")
+  // TODO: load 'form' if not already loaded
+  lazy val form = byId[html.Form]("form")
   lazy val username = byId[html.Input]("username")
   lazy val password = byId[html.Input]("password")
 
