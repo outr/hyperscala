@@ -50,8 +50,8 @@ object HyperscalaBuild extends Build {
     .jsSettings(
       coverageEnabled := false,
       scalaJSStage in Global := FastOptStage,
-      crossTarget in fastOptJS := baseDirectory.value / ".." / ".jvm" / "src" / "main" / "web" / "app",
-      crossTarget in fullOptJS := baseDirectory.value / ".." / ".jvm" / "src" / "main" / "web" / "app"
+      crossTarget in fastOptJS := baseDirectory.value / ".." / "jvm" / "src" / "main" / "web" / "app",
+      crossTarget in fullOptJS := baseDirectory.value / ".." / "jvm" / "src" / "main" / "web" / "app"
     )
     .jvmSettings(
       coverageEnabled in Test := true

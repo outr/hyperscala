@@ -1,6 +1,6 @@
 package org.hyperscala
 
-import pl.metastack.metarx.Channel
+import pl.metastack.metarx.{Channel, StateChannel}
 
 import scala.annotation.compileTimeOnly
 import scala.language.experimental.macros
@@ -35,7 +35,7 @@ object Macros {
     val typeString = s.tpe.toString
     val (preType, postType) = if (typeString.indexOf('.') != -1) {
       val index = typeString.indexOf('.')
-      (typeString.substring(0, index + 1) -> typeString.substring(index + 1))
+      typeString.substring(0, index + 1) -> typeString.substring(index + 1)
     } else {
       "" -> typeString
     }
@@ -56,5 +56,24 @@ object Macros {
           override def app = webApp
          }
        """)
+  }
+
+  def connectionManager(c: blackbox.Context)(): c.Expr[ConnectionManager] = {
+    import c.universe._
+
+    val isJS = try {
+      c.universe.rootMirror.staticClass("scala.scalajs.js.Any")
+      true
+    } catch {
+      case t: Throwable => false
+    }
+
+    val manager = if (isJS) {
+      q"""new org.hyperscala.ClientConnectionManager(${c.prefix.tree})"""
+    } else {
+      q"""new org.hyperscala.ServerConnectionManager(${c.prefix.tree})"""
+    }
+
+    c.Expr[ConnectionManager](manager)
   }
 }

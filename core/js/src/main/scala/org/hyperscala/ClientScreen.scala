@@ -5,8 +5,6 @@ import org.scalajs.dom.ext._
 import org.scalajs.dom.raw.HTMLElement
 
 trait ClientScreen extends Screen {
-  override def app: ClientWebApplication
-
   type URL = String
 
   protected def init(): Unit

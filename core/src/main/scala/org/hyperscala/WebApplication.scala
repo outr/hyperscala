@@ -1,19 +1,18 @@
 package org.hyperscala
 
-import pl.metastack.metarx.Sub
+import pl.metastack.metarx.{StateChannel, Sub}
 
 import scala.language.experimental.macros
 
-abstract class WebApplication(host: String, port: Int) {
+abstract class WebApplication(val host: String, val port: Int) {
   protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   protected[hyperscala] var screens = Vector.empty[Screen]
-  protected[hyperscala] var connections = Set.empty[Connection]
-  protected[hyperscala] val currentConnection = new ThreadLocal[Option[Connection]] {
-    override def initialValue(): Option[Connection] = None
-  }
-  protected[hyperscala] def connection: Connection = currentConnection.get().getOrElse(throw new RuntimeException(s"Connection not specified."))
+
+  protected def createConnectionManager(): ConnectionManager = macro Macros.connectionManager
+  protected val connectionManager: ConnectionManager
 
   def create[S <: Screen]: S = macro Macros.screen[S]
+  def communicationPath: String = "/communication"
 
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit = synchronized {
     val position = picklers.length
@@ -21,7 +20,7 @@ abstract class WebApplication(host: String, port: Int) {
     pickler.channel.attach { t =>
       if (!pickler.receiving.get()) {
         val json = pickler.write(t)
-        connection.send(position, json)
+        connectionManager.connection.send(position, json)
       }
     }
   }

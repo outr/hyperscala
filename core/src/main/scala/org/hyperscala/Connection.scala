@@ -11,7 +11,6 @@ trait Connection {
     * @param id the id of the pickler used
     * @param json the JSON data to send
     */
-  // TODO: Macro for sending
   def send(id: Int, json: String): Unit
 
   /**

@@ -2,17 +2,9 @@ package example
 
 import com.outr.scribe.Logging
 import org.hyperscala.ClientScreen
-import org.scalajs.dom.{Event, html}
+import org.scalajs.dom._
 
 trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
-  // Change screen upon successful login
-  response.attach { r =>
-    r.errorMessage match {
-      case Some(message) => logger.warn(s"Failed to authenticate: $message")
-      case None => app.screen := Some(ExampleApplication.dashboard)
-    }
-  }
-
   // Configure form submit
   // TODO: load 'form' if not already loaded
   lazy val form = byId[html.Form]("form")
@@ -22,6 +14,14 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
   override def init(): Unit = {
     logger.info(s"Login init!")
 
+    // Change screen upon successful login
+    response.attach { r =>
+      r.errorMessage match {
+        case Some(message) => logger.warn(s"Failed to authenticate: $message")
+        case None => logger.info("Should log in...") //app.screen := Some(ExampleApplication.dashboard)   // TODO: implement
+      }
+    }
+
     // Send authentication request to server
     form.onsubmit = (evt: Event) => {
       authenticate := Authentication(username.value, password.value)
@@ -29,10 +29,12 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
     }
   }
 
-  override def activate(): Unit = {
+  override def activate(): URL = {
     logger.info(s"Login Activated!")
 
     form.style.display = "block"
+
+    "/login.html"
   }
 
   override def deactivate(): Unit = {
@@ -40,4 +42,6 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
 
     form.style.display = "none"
   }
+
+  override def isActive: Boolean = document.location.pathname == "/login.html"
 }
