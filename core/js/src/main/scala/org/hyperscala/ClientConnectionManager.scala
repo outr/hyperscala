@@ -11,7 +11,7 @@ class ClientConnectionManager(app: WebApplication) extends ConnectionManager {
 
   override def connectionOption: Option[Connection] = Option(_connection)
 
-  override def init(): Unit = _connection.init()
+  _connection.init()
 }
 
 class ClientConnection(val app: WebApplication) extends Connection with Logging {

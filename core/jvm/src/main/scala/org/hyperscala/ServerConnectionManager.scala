@@ -15,8 +15,6 @@ class ServerConnectionManager(val app: WebApplication) extends WebSocketConnecti
 
   override def connectionOption: Option[Connection] = currentConnection.get()
 
-  override def init(): Unit = {}
-
   override def onConnect(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = {
     logger.info("WebSocket connected!")
     val connection = new ServerConnection(this, channel)

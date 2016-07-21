@@ -6,7 +6,8 @@ import scala.language.experimental.macros
 
 abstract class WebApplication(val host: String, val port: Int) {
   protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
-  protected[hyperscala] var screens = Vector.empty[Screen]
+  protected[hyperscala] var _screens = Vector.empty[Screen]
+  def screens: Vector[Screen] = _screens
 
   protected def createConnectionManager(): ConnectionManager = macro Macros.connectionManager
   val connectionManager: ConnectionManager

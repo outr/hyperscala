@@ -31,8 +31,6 @@ class Server(host: String, port: Int) extends Logging {
     }
   }
 
-  implicit def httpHandler2PathHandler(h: HttpHandler): PathHandler = HttpPathHandler(h)
-
   def start(): Unit = synchronized {
     val server = Undertow.builder()
       .addHttpListener(port, host)
@@ -86,19 +84,14 @@ class Server(host: String, port: Int) extends Logging {
           false
         }
       })
-      logger.info(s"Looking up path: ${exchange.getRequestPath}")
-      mappedPathHandler.lookup(exchange.getRequestPath) match {
-        case Some(h) => h.handleRequest(exchange)
-        case None => defaultHandler match {
-          case Some(h) => h.handleRequest(exchange)
-          case None => // Nothing
-        }
-      }
+      val handler = mappedPathHandler.lookup(exchange.getRequestPath).orElse(defaultHandler)
+      logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
+      handler.foreach(_.handleRequest(exchange))
     }
   }
 }
 
-object Server {
+object Server extends Logging {
   def main(args: Array[String]): Unit = {
     val server = new Server("localhost", 8080)
     server.register("/", "text/html", (hse: HttpServerExchange) => {

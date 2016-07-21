@@ -54,6 +54,8 @@ object Macros {
          val webApp = ${c.prefix.tree}
          new $screenType {
           override def app = webApp
+
+          override def toString(): String = $screenTypeString
          }
        """)
   }
