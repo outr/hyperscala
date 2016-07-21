@@ -7,8 +7,8 @@ abstract class Pickler[T](val screen: Screen) {
     override def initialValue(): Boolean = false
   }
 
-  val id = screen.app.add(this)
   val channel: Channel[T] = Channel[T]
+  val id = screen.app.add(this)
 
   def read(json: String): T
   def write(t: T): String

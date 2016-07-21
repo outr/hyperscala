@@ -17,6 +17,4 @@ trait ClientDashboardScreen extends DashboardScreen with ClientScreen with Loggi
   override protected def deactivate(): Unit = {
     logger.info("Dashboard deactivate!")
   }
-
-  override def isActive: Boolean = document.location.pathname == "/dashboard.html"
 }

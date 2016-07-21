@@ -8,4 +8,6 @@ trait Screen {
   def app: WebApplication
 
   def register[T]: Channel[T] = macro Macros.pickler[T]
+
+  def isPathMatch(path: String): Boolean
 }

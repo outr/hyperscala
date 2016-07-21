@@ -1,7 +1,7 @@
 package example
 
 import com.outr.scribe.Logging
-import org.hyperscala.ClientScreen
+import org.hyperscala.{ClientScreen, WebApplication}
 import org.scalajs.dom._
 
 trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
@@ -42,6 +42,4 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
 
     form.style.display = "none"
   }
-
-  override def isActive: Boolean = document.location.pathname == "/login.html"
 }

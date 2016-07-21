@@ -9,7 +9,7 @@ abstract class WebApplication(val host: String, val port: Int) {
   protected[hyperscala] var screens = Vector.empty[Screen]
 
   protected def createConnectionManager(): ConnectionManager = macro Macros.connectionManager
-  protected val connectionManager: ConnectionManager
+  val connectionManager: ConnectionManager
 
   def create[S <: Screen]: S = macro Macros.screen[S]
   def communicationPath: String = "/communication"

@@ -13,8 +13,6 @@ trait ClientScreen extends Screen {
 
   protected def deactivate(): Unit
 
-  def isActive: Boolean
-
   def byTag[T <: HTMLElement](tagName: String): List[T] = {
     document.getElementsByTagName(tagName).toList.map(_.asInstanceOf[T])
   }
