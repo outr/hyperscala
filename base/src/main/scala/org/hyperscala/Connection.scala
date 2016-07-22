@@ -7,7 +7,7 @@ trait Connection {
 
   def init(): Unit
 
-  val screen: Sub[Option[Screen]] = Sub[Option[Screen]](None)
+  val screen: Sub[Option[BaseScreen]] = Sub[Option[BaseScreen]](None)
 
   /**
     * Implement to support sending of JSON

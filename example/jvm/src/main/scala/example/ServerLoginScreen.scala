@@ -8,7 +8,12 @@ import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
 
 trait ServerLoginScreen extends LoginScreen with ServerScreen {
   authenticate.attach { auth =>
-    logger.info(s"Autnentication request: ${auth.username} / ${auth.password}")
+    logger.info(s"Authentication request: ${auth.username} / ${auth.password} - Connection: ${app.connection}")
+    if (auth.username == "user" && auth.password == "password") {
+      response := AuthResponse(None)
+    } else {
+      response := AuthResponse(Some("Invalid username / password combination"))
+    }
   }
 
   override def template: File = new File("src/main/web/login.html")

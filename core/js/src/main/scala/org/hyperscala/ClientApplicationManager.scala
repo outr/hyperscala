@@ -56,7 +56,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     logger.info(s"Initialized. Path: $path, Screen: ${screen.get}")
 
     // Listen for screen changes
-    var previous: Option[Screen] = None
+    var previous: Option[BaseScreen] = None
     var initialized = Set.empty[ClientScreen]
     screen.attach { screenOption =>
       logger.info(s"Screen changed: $screenOption")

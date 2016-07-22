@@ -8,6 +8,7 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
   // Configure form submit
   // TODO: load 'form' if not already loaded
   lazy val form = byId[html.Form]("login")
+  lazy val message = byId[html.Div]("message")
   lazy val username = byId[html.Input]("username")
   lazy val password = byId[html.Input]("password")
 
@@ -17,8 +18,11 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
     // Change screen upon successful login
     response.attach { r =>
       r.errorMessage match {
-        case Some(message) => logger.warn(s"Failed to authenticate: $message")
-        case None => logger.info("Should log in...") //app.screen := Some(ExampleApplication.dashboard)   // TODO: implement
+        case Some(msg) => message.innerHTML = msg
+        case None => {
+          message.innerHTML = ""
+          app.connection.screen := Some(ExampleApplication.dashboard)
+        }
       }
     }
 

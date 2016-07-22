@@ -2,7 +2,7 @@ package org.hyperscala
 
 import pl.metastack.metarx.Channel
 
-abstract class Pickler[T](val screen: Screen) {
+abstract class Pickler[T](val screen: BaseScreen) {
   private[hyperscala] val receiving = new ThreadLocal[Boolean] {
     override def initialValue(): Boolean = false
   }

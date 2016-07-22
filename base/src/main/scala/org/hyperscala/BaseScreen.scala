@@ -4,7 +4,7 @@ import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
 
-trait Screen {
+trait BaseScreen {
   app._screens = app._screens :+ this
 
   def app: BaseApplication
