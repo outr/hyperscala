@@ -5,11 +5,43 @@ import scoverage.ScoverageSbtPlugin.autoImport._
 
 object HyperscalaBuild extends Build {
   lazy val root = project.in(file("."))
-    .aggregate(client, server)
+    .aggregate(baseJS, baseJVM, client, server, exampleJS, exampleJVM)
     .settings(sharedSettings())
     .settings(publishArtifact := false)
 
+  lazy val base = crossProject.crossType(HyperscalaCrossType).in(file("base"))
+    .settings(sharedSettings(Some("base")): _*)
+    .settings(
+      libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
+      libraryDependencies ++= Seq(
+        "com.outr.scribe" %%% "scribe" % Dependencies.scribe,
+        "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
+        "pl.metastack" %%% "metarx" % Dependencies.metaRx,
+        "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
+      ),
+      autoAPIMappings := true,
+      apiMappings += (scalaInstance.value.libraryJar -> url(s"http://www.scala-lang.org/api/${scalaVersion.value}/"))
+    )
+    .jsSettings(
+      libraryDependencies ++= Seq(
+        "org.scala-js" %%% "scalajs-dom" % Dependencies.scalaJSDOM
+      ),
+      coverageEnabled := false,
+      scalaJSStage in Global := FastOptStage
+    )
+    .jvmSettings(
+      libraryDependencies ++= Seq(
+        "com.outr.scribe" %% "scribe-slf4j" % Dependencies.scribe,
+        "io.undertow" % "undertow-core" % Dependencies.undertow,
+        "org.powerscala" %% "powerscala-io" % Dependencies.powerscala
+      ),
+      coverageEnabled in Test := true
+    )
+  lazy val baseJS = base.js
+  lazy val baseJVM = base.jvm
+
   lazy val core = crossProject.crossType(HyperscalaCrossType).in(file("core"))
+    .dependsOn(base)
     .settings(sharedSettings(Some("core")): _*)
     .settings(
       libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
@@ -37,8 +69,8 @@ object HyperscalaBuild extends Build {
       ),
       coverageEnabled in Test := true
     )
-  lazy val client = core.js
-  lazy val server = core.jvm
+  lazy val client = core.js.dependsOn(baseJS)
+  lazy val server = core.jvm.dependsOn(baseJVM)
 
   lazy val example = crossProject.crossType(HyperscalaCrossType).in(file("example"))
     .settings(sharedSettings(Some("example")): _*)

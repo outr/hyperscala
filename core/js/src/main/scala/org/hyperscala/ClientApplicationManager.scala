@@ -4,7 +4,7 @@ import com.outr.scribe.Logging
 import org.scalajs.dom._
 import org.scalajs.dom.raw.WebSocket
 
-class ClientConnectionManager(app: WebApplication) extends ConnectionManager {
+class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
   private lazy val _connection = new ClientConnection(app)
 
   override def connections: Set[Connection] = Set(_connection)

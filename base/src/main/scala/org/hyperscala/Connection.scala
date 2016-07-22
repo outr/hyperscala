@@ -1,7 +1,7 @@
 package org.hyperscala
 
 trait Connection {
-  def app: WebApplication
+  def app: BaseApplication
 
   def init(): Unit
 

@@ -1,11 +1,9 @@
 package example
 
-import org.hyperscala.{ConnectionManager, Screen, WebApplication}
+import org.hyperscala.{Screen, WebApplication}
 import pl.metastack.metarx.Channel
 
 object ExampleApplication extends WebApplication("localhost", 8080) {
-  override val connectionManager: ConnectionManager = createConnectionManager()
-
   val login = create[LoginScreen]
   val dashboard = create[DashboardScreen]
 }

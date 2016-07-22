@@ -4,13 +4,12 @@ import pl.metastack.metarx.{StateChannel, Sub}
 
 import scala.language.experimental.macros
 
-abstract class WebApplication(val host: String, val port: Int) {
-  protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
-  protected[hyperscala] var _screens = Vector.empty[Screen]
+abstract class WebApplication(val host: String, val port: Int) extends BaseApplication {
+  override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
+  override protected[hyperscala] var _screens = Vector.empty[Screen]
   def screens: Vector[Screen] = _screens
 
-  protected def createConnectionManager(): ConnectionManager = macro Macros.connectionManager
-  val connectionManager: ConnectionManager
+  val manager: ApplicationManager = createApplicationManager()
 
   def create[S <: Screen]: S = macro Macros.screen[S]
   def communicationPath: String = "/communication"
@@ -21,7 +20,7 @@ abstract class WebApplication(val host: String, val port: Int) {
     pickler.channel.attach { t =>
       if (!pickler.receiving.get()) {
         val json = pickler.write(t)
-        connectionManager.connection.send(position, json)
+        manager.connection.send(position, json)
       }
     }
   }

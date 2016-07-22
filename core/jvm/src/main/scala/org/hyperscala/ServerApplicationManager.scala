@@ -5,7 +5,7 @@ import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage, WebSocketChannel, WebSockets}
 import io.undertow.websockets.spi.WebSocketHttpExchange
 
-class ServerConnectionManager(val app: WebApplication) extends WebSocketConnectionCallback with ConnectionManager {
+class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
   private val currentConnection = new ThreadLocal[Option[Connection]] {
     override def initialValue(): Option[Connection] = None
   }
@@ -35,7 +35,7 @@ class ServerConnectionManager(val app: WebApplication) extends WebSocketConnecti
   }
 }
 
-class ServerConnection(manager: ServerConnectionManager, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
+class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
   override def app: WebApplication = manager.app
 
   override def init(): Unit = {}
