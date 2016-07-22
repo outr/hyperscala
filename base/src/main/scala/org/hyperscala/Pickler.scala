@@ -2,13 +2,13 @@ package org.hyperscala
 
 import pl.metastack.metarx.Channel
 
-abstract class Pickler[T](val screen: BaseScreen) {
+abstract class Pickler[T](app: BaseApplication) {
   private[hyperscala] val receiving = new ThreadLocal[Boolean] {
     override def initialValue(): Boolean = false
   }
 
   val channel: Channel[T] = Channel[T]
-  val id = screen.app.add(this)
+  val id = app.add(this)
 
   def read(json: String): T
   def write(t: T): String

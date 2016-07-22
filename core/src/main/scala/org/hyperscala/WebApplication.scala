@@ -1,13 +1,19 @@
 package org.hyperscala
 
+import pl.metastack.metarx.Channel
+
 import scala.language.experimental.macros
 
 abstract class WebApplication(val host: String, val port: Int) extends BaseApplication {
   override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   override protected[hyperscala] var _screens = Vector.empty[BaseScreen]
-  def screens: Vector[Screen] = _screens.asInstanceOf[Vector[Screen]]
 
   lazy val manager: ApplicationManager = createApplicationManager()
+
+  val pathChanged: Channel[PathChanged] = register[PathChanged]
+
+  def screens: Vector[Screen] = _screens.asInstanceOf[Vector[Screen]]
+
   def connection: Connection = manager.connection
 
   def create[S <: Screen]: S = macro Macros.screen[S]
