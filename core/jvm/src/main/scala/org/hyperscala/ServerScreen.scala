@@ -15,23 +15,23 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
 
   def template: File
 
-  def deltas(exchange: HttpServerExchange): List[Delta]
+  def deltas(): List[Delta]
 
   def partialSelector: Selector
 
-  def html(exchange: HttpServerExchange, partial: Boolean): String = {
+  def html(partial: Boolean): String = {
     val selector = if (partial) {
       Some(partialSelector)
     } else {
       None
     }
-    streamable.stream(deltas(exchange), selector)
+    streamable.stream(deltas(), selector)
   }
 
   override def handleRequest(exchange: HttpServerExchange): Unit = {
     val partial = Option(exchange.getQueryParameters.get("partial")).exists(_.contains("true"))
     logger.info(s"handleRequest: ${exchange.getQueryParameters} / $partial")
-    val html = this.html(exchange, partial)
+    val html = this.html(partial)
     exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, html.length)
     exchange.getResponseHeaders.put(Headers.CONTENT_TYPE, "text/html")
     exchange.getResponseSender.send(html)

@@ -44,7 +44,14 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
           case None => // Nothing previous set
         }
         newScreen match {
-          case Some(scrn) => scrn.asInstanceOf[ServerScreen].activate(connection)
+          case Some(scrn) => {
+            val serverScreen = scrn.asInstanceOf[ServerScreen]
+            serverScreen.activate(connection)
+            if (evt.requestContent) {
+              val html = serverScreen.html(partial = true)
+              app.screenContent := ScreenContent(html, evt.path)
+            }
+          }
           case None => // Nothing new set
         }
         connection.screen := newScreen

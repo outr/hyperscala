@@ -11,6 +11,7 @@ abstract class WebApplication(val host: String, val port: Int) extends BaseAppli
   lazy val manager: ApplicationManager = createApplicationManager()
 
   val pathChanged: Channel[PathChanged] = register[PathChanged]
+  val screenContent: Channel[ScreenContent] = register[ScreenContent]
 
   def screens: Vector[Screen] = _screens.asInstanceOf[Vector[Screen]]
 
