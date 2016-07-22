@@ -34,7 +34,23 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
     }
   }
 
-  override def init(): Unit = {}
+  override def init(): Unit = {
+    app.pathChanged.attach { evt =>
+      val previousScreen = connection.screen.get
+      val newScreen = app.screens.find(_.isPathMatch(evt.path))
+      if (previousScreen != newScreen) {
+        previousScreen match {
+          case Some(previous) => previous.asInstanceOf[ServerScreen].deactivate(connection)
+          case None => // Nothing previous set
+        }
+        newScreen match {
+          case Some(scrn) => scrn.asInstanceOf[ServerScreen].activate(connection)
+          case None => // Nothing new set
+        }
+        connection.screen := newScreen
+      }
+    }
+  }
 }
 
 class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {

@@ -55,6 +55,9 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     screen := app.screens.find(_.isPathMatch(path))
     logger.info(s"Initialized. Path: $path, Screen: ${screen.get}")
 
+    // Send current path to server
+    app.pathChanged := PathChanged(path)
+
     // Listen for screen changes
     var previous: Option[BaseScreen] = None
     var initialized = Set.empty[ClientScreen]

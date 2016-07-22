@@ -3,7 +3,7 @@ package example
 import java.io.File
 
 import io.undertow.server.HttpServerExchange
-import org.hyperscala.ServerScreen
+import org.hyperscala.{Connection, ServerScreen}
 import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
 
 trait ServerLoginScreen extends LoginScreen with ServerScreen {
@@ -21,4 +21,16 @@ trait ServerLoginScreen extends LoginScreen with ServerScreen {
   override def deltas(exchange: HttpServerExchange): List[Delta] = List(
     Delta.ReplaceContent(ByTag("title"), "Modified Login Title")
   )
+
+  override def activate(connection: Connection): Unit = {
+    super.activate(connection)
+
+    logger.info(s"LoginScreen activated!")
+  }
+
+  override def deactivate(connection: Connection): Unit = {
+    super.deactivate(connection)
+
+    logger.info(s"LoginScreen deactivated!")
+  }
 }
