@@ -2,7 +2,7 @@ package org.hyperscala
 
 import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
-import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage, WebSocketChannel, WebSockets}
+import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage, StreamSourceFrameChannel, WebSocketChannel, WebSockets}
 import io.undertow.websockets.spi.WebSocketHttpExchange
 
 class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
@@ -10,7 +10,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
     override def initialValue(): Option[Connection] = None
   }
 
-  private var _connections = Set.empty[Connection]
+  private[hyperscala] var _connections = Set.empty[Connection]
   override def connections: Set[Connection] = _connections
 
   override def connectionOption: Option[Connection] = currentConnection.get()
@@ -40,7 +40,11 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
 class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
   override def app: WebApplication = manager.app
 
-  override def init(): Unit = {}
+  override def init(): Unit = {
+    manager.synchronized {
+      manager._connections += this
+    }
+  }
 
   override def send(id: Int, json: String): Unit = WebSockets.sendText(s"$id:$json", channel, None.orNull)
 
@@ -55,6 +59,14 @@ class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChan
       manager.using(this) {
         receive(id, json)
       }
+    }
+  }
+
+  override def onClose(webSocketChannel: WebSocketChannel, channel: StreamSourceFrameChannel): Unit = {
+    super.onClose(webSocketChannel, channel)
+
+    manager.synchronized {
+      manager._connections -= this
     }
   }
 }
