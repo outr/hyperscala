@@ -9,7 +9,7 @@ abstract class WebApplication(val host: String, val port: Int) extends BaseAppli
   override protected[hyperscala] var _screens = Vector.empty[Screen]
   def screens: Vector[Screen] = _screens
 
-  val manager: ApplicationManager = createApplicationManager()
+  lazy val manager: ApplicationManager = createApplicationManager()
 
   def create[S <: Screen]: S = macro Macros.screen[S]
   def communicationPath: String = "/communication"
@@ -24,4 +24,6 @@ abstract class WebApplication(val host: String, val port: Int) extends BaseAppli
       }
     }
   }
+
+  def init(): Unit = manager.init()
 }

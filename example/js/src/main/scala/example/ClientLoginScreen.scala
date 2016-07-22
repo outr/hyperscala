@@ -7,7 +7,7 @@ import org.scalajs.dom._
 trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
   // Configure form submit
   // TODO: load 'form' if not already loaded
-  lazy val form = byId[html.Form]("form")
+  lazy val form = byId[html.Form]("login")
   lazy val username = byId[html.Input]("username")
   lazy val password = byId[html.Input]("password")
 
@@ -25,6 +25,7 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
     // Send authentication request to server
     form.onsubmit = (evt: Event) => {
       authenticate := Authentication(username.value, password.value)
+      logger.info(s"Sent: ${username.value} / ${password.value}")
       false
     }
   }

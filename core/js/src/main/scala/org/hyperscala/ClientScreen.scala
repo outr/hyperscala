@@ -7,11 +7,11 @@ import org.scalajs.dom.raw.HTMLElement
 trait ClientScreen extends Screen {
   type URL = String
 
-  protected def init(): Unit
+  def init(): Unit
 
-  protected def activate(): URL
+  def activate(): URL
 
-  protected def deactivate(): Unit
+  def deactivate(): Unit
 
   def byTag[T <: HTMLElement](tagName: String): List[T] = {
     document.getElementsByTagName(tagName).toList.map(_.asInstanceOf[T])

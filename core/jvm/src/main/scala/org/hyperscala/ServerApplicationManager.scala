@@ -22,7 +22,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       _connections += connection
     }
     channel.getReceiveSetter.set(connection)
-
+    channel.resumeReceives()
   }
 
   def using[R](connection: Connection)(f: => R): R = {
@@ -33,6 +33,8 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       currentConnection.remove()
     }
   }
+
+  override def init(): Unit = {}
 }
 
 class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {

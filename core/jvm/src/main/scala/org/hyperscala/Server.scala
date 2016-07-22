@@ -114,6 +114,9 @@ object Server extends Logging {
       case screen: ServerScreen => server.register(screen)
     }
 
+    // Initialize WebApplication
+    app.init()
+
     server
   }
 }

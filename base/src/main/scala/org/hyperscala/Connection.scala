@@ -1,9 +1,13 @@
 package org.hyperscala
 
+import pl.metastack.metarx.Sub
+
 trait Connection {
   def app: BaseApplication
 
   def init(): Unit
+
+  val screen: Sub[Option[Screen]] = Sub[Option[Screen]](None)
 
   /**
     * Implement to support sending of JSON

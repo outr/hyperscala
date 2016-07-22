@@ -5,16 +5,16 @@ import org.hyperscala.ClientScreen
 import org.scalajs.dom._
 
 trait ClientDashboardScreen extends DashboardScreen with ClientScreen with Logging {
-  override protected def init(): Unit = {
+  override def init(): Unit = {
     logger.info("Dashboard init!")
   }
 
-  override protected def activate(): URL = {
+  override def activate(): URL = {
     logger.info(s"Dashboard activate!")
     "/dashboard.html"
   }
 
-  override protected def deactivate(): Unit = {
+  override def deactivate(): Unit = {
     logger.info("Dashboard deactivate!")
   }
 }

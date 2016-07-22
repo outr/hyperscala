@@ -11,7 +11,7 @@ class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
 
   override def connectionOption: Option[Connection] = Option(_connection)
 
-  _connection.init()
+  override def init(): Unit = _connection.init()
 }
 
 class ClientConnection(val app: WebApplication) extends Connection with Logging {
@@ -47,6 +47,39 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
         val id = messageData.substring(0, index).toInt
         val json = messageData.substring(index + 1)
         receive(id, json)
+      }
+    }
+
+    // TODO: listen for history change events
+    val path = document.location.pathname
+    screen := app.screens.find(_.isPathMatch(path))
+    logger.info(s"Initialized. Path: $path, Screen: ${screen.get}")
+
+    // Listen for screen changes
+    var previous: Option[Screen] = None
+    var initialized = Set.empty[ClientScreen]
+    screen.attach { screenOption =>
+      logger.info(s"Screen changed: $screenOption")
+      if (screenOption != previous) {
+        previous match {
+          case Some(scrn) => scrn match {
+            case s: ClientScreen => s.deactivate()
+          }
+          case None => // No previous screen defined
+        }
+        screenOption match {
+          case Some(scrn) => scrn match {
+            case s: ClientScreen => {
+              if (!initialized.contains(s)) {
+                initialized += s
+                s.init()
+              }
+              s.activate()
+            }
+          }
+          case None => // Nothing to do
+        }
+        previous = screenOption
       }
     }
   }
