@@ -11,7 +11,7 @@ trait ServerDashboardScreen extends DashboardScreen with ServerScreen {
 
   override def partialSelector: Selector = ById("example")
 
-  override def deltas(exchange: HttpServerExchange): List[Delta] = List(
+  override def deltas(): List[Delta] = List(
     Delta.ReplaceContent(ByTag("title"), "Modified Example Title")
   )
 }

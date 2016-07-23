@@ -18,7 +18,7 @@ trait ServerLoginScreen extends LoginScreen with ServerScreen {
 
   override def template: File = new File("src/main/web/login.html")
   override def partialSelector: Selector = ById("login")
-  override def deltas(exchange: HttpServerExchange): List[Delta] = List(
+  override def deltas(): List[Delta] = List(
     Delta.ReplaceContent(ByTag("title"), "Modified Login Title")
   )
 

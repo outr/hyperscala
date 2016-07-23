@@ -9,9 +9,10 @@ trait ClientDashboardScreen extends DashboardScreen with ClientScreen with Loggi
     logger.info("Dashboard init!")
   }
 
-  override def activate(): URL = {
+  override def url: URL = "/dashboard.html"
+
+  override def activate(): Unit = {
     logger.info(s"Dashboard activate!")
-    "/dashboard.html"
   }
 
   override def deactivate(): Unit = {

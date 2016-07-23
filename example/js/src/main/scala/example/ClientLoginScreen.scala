@@ -34,12 +34,12 @@ trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
     }
   }
 
-  override def activate(): URL = {
+  override def url: URL = "/login.html"
+
+  override def activate(): Unit = {
     logger.info(s"Login Activated!")
 
     form.style.display = "block"
-
-    "/login.html"
   }
 
   override def deactivate(): Unit = {

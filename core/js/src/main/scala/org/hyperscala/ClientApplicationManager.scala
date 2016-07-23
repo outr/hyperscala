@@ -21,6 +21,8 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   private var connected = false
   private var queue = List.empty[String]
 
+  private var initialized = Set.empty[ClientScreen]
+
   override def init(): Unit = {
     webSocket.onopen = (evt: Event) => {
       logger.info(s"WebSocket connection open")
@@ -53,7 +55,10 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     // TODO: listen for history change events
     val path = document.location.pathname
     screen := app.screens.find(_.isPathMatch(path))
-    logger.info(s"Initialized. Path: $path, Screen: ${screen.get}")
+
+    // TODO: manage better
+    screen.get.get.asInstanceOf[ClientScreen].init()
+    screen.get.get.asInstanceOf[ClientScreen].activate()
 
     // Send current path to server
     app.pathChanged := PathChanged(path, requestContent = false)
@@ -65,7 +70,6 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
 
     // Listen for screen changes
     var previous: Option[BaseScreen] = None
-    var initialized = Set.empty[ClientScreen]
     screen.attach { screenOption =>
       logger.info(s"Screen changed: $screenOption")
       if (screenOption != previous) {
@@ -78,11 +82,12 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
         screenOption match {
           case Some(scrn) => scrn match {
             case s: ClientScreen => {
-              if (!initialized.contains(s)) {
-                initialized += s
-                s.init()
+              val initted = initialized.contains(s)
+              val url = s.url
+              app.pathChanged := PathChanged(url, requestContent = !initted)
+              if (initted) {
+                s.activate()
               }
-              s.activate()
             }
           }
           case None => // Nothing to do

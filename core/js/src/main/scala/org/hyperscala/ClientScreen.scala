@@ -7,9 +7,11 @@ import org.scalajs.dom.raw.HTMLElement
 trait ClientScreen extends Screen {
   type URL = String
 
+  def url: URL
+
   def init(): Unit
 
-  def activate(): URL
+  def activate(): Unit
 
   def deactivate(): Unit
 
