@@ -17,6 +17,8 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
 
   def deltas(): List[Delta]
 
+  def partialParentId: String
+
   def partialSelector: Selector
 
   def html(partial: Boolean): String = {

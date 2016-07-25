@@ -36,6 +36,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
 
   override def init(): Unit = {
     app.pathChanged.attach { evt =>
+      logger.info(s"Path Changed: $evt")
       val previousScreen = connection.screen.get
       val newScreen = app.screens.find(_.isPathMatch(evt.path))
       if (previousScreen != newScreen) {
@@ -49,7 +50,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
             serverScreen.activate(connection)
             if (evt.requestContent) {
               val html = serverScreen.html(partial = true)
-              app.screenContent := ScreenContent(html, evt.path)
+              app.screenContent := ScreenContent(html, evt.path, serverScreen.partialParentId)
             }
           }
           case None => // Nothing new set

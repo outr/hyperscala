@@ -21,7 +21,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   private var connected = false
   private var queue = List.empty[String]
 
-  private var initialized = Set.empty[ClientScreen]
+  private var popping = false
 
   override def init(): Unit = {
     webSocket.onopen = (evt: Event) => {
@@ -52,50 +52,82 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
       }
     }
 
-    // TODO: listen for history change events
-    val path = document.location.pathname
-    screen := app.screens.find(_.isPathMatch(path))
+    updateScreen()
 
-    // TODO: manage better
-    screen.get.get.asInstanceOf[ClientScreen].init()
-    screen.get.get.asInstanceOf[ClientScreen].activate()
-
-    // Send current path to server
-    app.pathChanged := PathChanged(path, requestContent = false)
+    val s = screen.get.get.asInstanceOf[ClientScreen]
+    s._loaded = true
+    s.init()
+    s.activate()
 
     // Register listener for Screen content
     app.screenContent.attach { evt =>
-      logger.info(s"Received Screen content: ${evt.content} for ${evt.path}")
+      val s = app.screens.find(_.isPathMatch(evt.path)).asInstanceOf[Option[ClientScreen]]
+      logger.info(s"Received Screen content: ${evt.content} for ${evt.path} (screen: $s)")
+      s.get.load(evt)
     }
 
-    // Listen for screen changes
-    var previous: Option[BaseScreen] = None
-    screen.attach { screenOption =>
-      logger.info(s"Screen changed: $screenOption")
-      if (screenOption != previous) {
-        previous match {
-          case Some(scrn) => scrn match {
-            case s: ClientScreen => s.deactivate()
-          }
-          case None => // No previous screen defined
-        }
-        screenOption match {
-          case Some(scrn) => scrn match {
-            case s: ClientScreen => {
-              val initted = initialized.contains(s)
-              val url = s.url
-              window.history.pushState(url, url, url)
-//              app.pathChanged := PathChanged(url, requestContent = !initted)
-              if (initted) {
-                s.activate()
-              }
-            }
-          }
-          case None => // Nothing to do
-        }
-        previous = screenOption
+    // Listen for history changes
+    window.addEventListener("popstate", (evt: PopStateEvent) => {
+      popping = true
+      try {
+        updateState()
+      } finally {
+        popping = false
       }
+    })
+
+    // Listen for screen changes
+    screen.attach(screenChanged)
+  }
+
+  private var previous: Option[BaseScreen] = None
+
+  private def updateScreen(): Option[ClientScreen] = {
+    val path = document.location.pathname
+    val s = app.screens.find(_.isPathMatch(path)).asInstanceOf[Option[ClientScreen]]
+    if (screen.get != s) {
+      screen := s
     }
+    s
+  }
+
+  private var firstScreen = true
+
+  private def screenChanged(screenOption: Option[BaseScreen]): Unit = {
+    if (screenOption != previous) {
+      previous match {
+        case Some(scrn) => scrn match {
+          case s: ClientScreen => s.deactivate()
+        }
+        case None => // No previous screen defined
+      }
+      screenOption match {
+        case Some(scrn) => scrn match {
+          case s: ClientScreen => {
+            val url = s.url
+            if (firstScreen) {
+              firstScreen = false
+            } else if (!popping) {
+              logger.info(s"Pushing state: $url")
+              window.history.pushState(url, url, url)
+            }
+            updateState()
+            s.show()
+          }
+        }
+        case None => // Nothing to do
+      }
+      previous = screenOption
+    }
+  }
+
+  private var previousState: String = ""
+
+  private def updateState(): Unit = if (document.location.pathname != previousState) {
+    logger.info(s"Updating state from ${previousState} to ${document.location.pathname}")
+    previousState = document.location.pathname
+    val s = updateScreen()
+    app.pathChanged := PathChanged(document.location.pathname, requestContent = !s.get.loaded)
   }
 
   override def send(id: Int, json: String): Unit = {
