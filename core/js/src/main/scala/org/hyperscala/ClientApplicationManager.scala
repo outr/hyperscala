@@ -84,7 +84,8 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
             case s: ClientScreen => {
               val initted = initialized.contains(s)
               val url = s.url
-              app.pathChanged := PathChanged(url, requestContent = !initted)
+              window.history.pushState(url, url, url)
+//              app.pathChanged := PathChanged(url, requestContent = !initted)
               if (initted) {
                 s.activate()
               }
