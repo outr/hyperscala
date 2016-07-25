@@ -1,6 +1,6 @@
 package example
 
-import org.hyperscala.{Screen, WebApplication}
+import org.hyperscala.{Screen, SimpleScreen, WebApplication}
 import pl.metastack.metarx.Channel
 
 object ExampleApplication extends WebApplication("localhost", 8080) {
@@ -8,11 +8,11 @@ object ExampleApplication extends WebApplication("localhost", 8080) {
   val dashboard = create[DashboardScreen]
 }
 
-trait LoginScreen extends Screen {
+trait LoginScreen extends SimpleScreen {
   val authenticate: Channel[Authentication] = register[Authentication]
   val response: Channel[AuthResponse] = register[AuthResponse]
 
-  override def isPathMatch(path: String): Boolean = path == "/login.html"
+  override def path: String = "/login.html"
 }
 
 trait DashboardScreen extends Screen {

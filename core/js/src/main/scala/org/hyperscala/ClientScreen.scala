@@ -8,9 +8,9 @@ trait ClientScreen extends Screen {
   private[hyperscala] var _loaded = false
   def loaded: Boolean = _loaded
 
-  type URL = String
+  type Path = String
 
-  def url: URL
+  def path: Path
 
   final def show(): Unit = if (loaded) {
     activate()

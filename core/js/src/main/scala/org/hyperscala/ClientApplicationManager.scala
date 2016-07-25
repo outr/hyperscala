@@ -102,12 +102,12 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
       screenOption match {
         case Some(scrn) => scrn match {
           case s: ClientScreen => {
-            val url = s.url
+            val path = s.path
             if (firstScreen) {
               firstScreen = false
             } else if (!popping) {
-              logger.info(s"Pushing state: $url")
-              window.history.pushState(url, url, url)
+              logger.info(s"Pushing state: $path")
+              window.history.pushState(path, path, path)
             }
             updateState()
             s.show()
