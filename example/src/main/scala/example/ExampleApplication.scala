@@ -15,8 +15,8 @@ trait LoginScreen extends SimpleScreen {
   override def path: String = "/login.html"
 }
 
-trait DashboardScreen extends Screen {
-  override def isPathMatch(path: String): Boolean = path == "/dashboard.html"
+trait DashboardScreen extends SimpleScreen {
+  override def path: String = "/dashboard.html"
 }
 
 case class Authentication(username: String, password: String)
