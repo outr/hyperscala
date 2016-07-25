@@ -10,8 +10,8 @@ import org.hyperscala.stream.{Delta, HTMLParser, Selector}
 trait ServerScreen extends Screen with ExplicitHandler with Logging {
   lazy val streamable = HTMLParser(template)
 
-  def activate(connection: Connection): Unit = {}
-  def deactivate(connection: Connection): Unit = {}
+  def activate(connection: Connection): Unit
+  def deactivate(connection: Connection): Unit
 
   def template: File
 

@@ -5,7 +5,7 @@ import org.hyperscala.ClientScreen
 import org.scalajs.dom._
 
 trait ClientDashboardScreen extends DashboardScreen with ClientScreen with Logging {
-  lazy val example = byId[html.Div]("example")
+  def example = byId[html.Div]("example")
 
   override def init(): Unit = {
     logger.info("Dashboard init!")

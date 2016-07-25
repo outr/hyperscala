@@ -17,14 +17,10 @@ trait ServerDashboardScreen extends DashboardScreen with ServerScreen {
   )
 
   override def activate(connection: Connection): Unit = {
-    super.activate(connection)
-
     logger.info(s"DashboardScreen activated!")
   }
 
   override def deactivate(connection: Connection): Unit = {
-    super.deactivate(connection)
-
     logger.info(s"DashboardScreen deactivated!")
   }
 }

@@ -6,11 +6,10 @@ import org.scalajs.dom._
 
 trait ClientLoginScreen extends LoginScreen with Logging with ClientScreen {
   // Configure form submit
-  // TODO: load 'form' if not already loaded
-  lazy val form = byId[html.Form]("login")
-  lazy val message = byId[html.Div]("message")
-  lazy val username = byId[html.Input]("username")
-  lazy val password = byId[html.Input]("password")
+  def form = byId[html.Form]("loginForm")
+  def message = byId[html.Div]("message")
+  def username = byId[html.Input]("username")
+  def password = byId[html.Input]("password")
 
   override def init(): Unit = {
     logger.info(s"Login init!")
