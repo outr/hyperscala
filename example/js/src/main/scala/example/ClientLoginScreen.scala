@@ -17,7 +17,7 @@ trait ClientLoginScreen extends LoginScreen with Logging with SimpleClientScreen
         case Some(msg) => message.innerHTML = msg
         case None => {
           message.innerHTML = ""
-          app.connection.screen := Some(ExampleApplication.dashboard)
+          app.connection.replaceWith(ExampleApplication.dashboard)
         }
       }
     }

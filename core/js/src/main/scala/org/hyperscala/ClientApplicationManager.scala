@@ -106,8 +106,13 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
             if (firstScreen) {
               firstScreen = false
             } else if (!popping) {
-              logger.info(s"Pushing state: $path")
-              window.history.pushState(path, path, path)
+              if (replace) {
+                logger.info(s"Replacing state: $path")
+                window.history.replaceState(path, path, path)
+              } else {
+                logger.info(s"Pushing state: $path")
+                window.history.pushState(path, path, path)
+              }
             }
             updateState()
             s.show()

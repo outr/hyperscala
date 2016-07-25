@@ -3,11 +3,22 @@ package org.hyperscala
 import pl.metastack.metarx.Sub
 
 trait Connection {
+  private[hyperscala] var replace = false
+
   def app: BaseApplication
 
   def init(): Unit
 
   val screen: Sub[Option[BaseScreen]] = Sub[Option[BaseScreen]](None)
+
+  def replaceWith(screen: BaseScreen): Unit = {
+    replace = true
+    try {
+      this.screen := Some(screen)
+    } finally {
+      replace = false
+    }
+  }
 
   /**
     * Implement to support sending of JSON
