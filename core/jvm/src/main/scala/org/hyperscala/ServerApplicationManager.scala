@@ -64,6 +64,8 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
 
 class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
   override def app: WebApplication = manager.app
+  val serverSession = Server.serverSession.getOrElse(throw new RuntimeException(s"No server session defined while initializing ServerConnection."))
+  logger.info(s"ServerSession: $serverSession")
 
   override def init(): Unit = {
     manager.synchronized {
@@ -73,7 +75,7 @@ class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChan
 
   override def send(id: Int, json: String): Unit = WebSockets.sendText(s"$id:$json", channel, None.orNull)
 
-  override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = {
+  override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = Server.withServerSession(serverSession) {
     val data = message.getData
     val index = data.indexOf(':')
     if (index == -1) {

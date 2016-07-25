@@ -3,15 +3,22 @@ package org.hyperscala
 import com.outr.scribe.Logging
 import io.undertow.{Handlers, Undertow}
 import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
-import io.undertow.util.{Headers, StatusCodes}
+import io.undertow.server.session.{InMemorySessionManager, SessionAttachmentHandler, SessionCookieConfig, Session => UndertowSession}
+import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
 
+import scala.language.experimental.macros
 import scala.language.implicitConversions
 
 class Server(host: String, port: Int) extends Logging {
   private val handler = new ServerHandler
   private var instance: Option[Undertow] = None
   private val mappedPathHandler = new MappedPathHandler
+  private val sessionManager = new InMemorySessionManager("ServerSessionManager")
+  private val sessionConfig = new SessionCookieConfig
+  private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
+    setNext(handler)
+  }
 
   var defaultHandler: Option[PathHandler] = None
   var errorHandler: HttpHandler = new HttpHandler {
@@ -34,7 +41,7 @@ class Server(host: String, port: Int) extends Logging {
   def start(): Unit = synchronized {
     val server = Undertow.builder()
       .addHttpListener(port, host)
-      .setHandler(handler)
+      .setHandler(sessionAttachmentHandler)
       .build()
     server.start()
     instance = Some(server)
@@ -76,22 +83,42 @@ class Server(host: String, port: Int) extends Logging {
 
   class ServerHandler extends HttpHandler {
     override def handleRequest(exchange: HttpServerExchange): Unit = {
-      exchange.addDefaultResponseListener(new DefaultResponseListener {
-        override def handleDefaultResponse(exchange: HttpServerExchange): Boolean = if (exchange.getStatusCode >= 400) {
-          errorHandler.handleRequest(exchange)
-          true
-        } else {
-          false
-        }
-      })
-      val handler = mappedPathHandler.lookup(exchange.getRequestPath).orElse(defaultHandler)
-      logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
-      handler.foreach(_.handleRequest(exchange))
+      Server._session.set(Option(Sessions.getOrCreateSession(exchange)))
+      try {
+        exchange.addDefaultResponseListener(new DefaultResponseListener {
+          override def handleDefaultResponse(exchange: HttpServerExchange): Boolean = if (exchange.getStatusCode >= 400) {
+            errorHandler.handleRequest(exchange)
+            true
+          } else {
+            false
+          }
+        })
+        val handler = mappedPathHandler.lookup(exchange.getRequestPath).orElse(defaultHandler)
+        logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
+        handler.foreach(_.handleRequest(exchange))
+      } finally {
+        Server._session.remove()
+      }
     }
   }
 }
 
 object Server extends Logging {
+  private val _session = new ThreadLocal[Option[UndertowSession]] {
+    override def initialValue(): Option[UndertowSession] = None
+  }
+  def serverSession: Option[UndertowSession] = _session.get()
+  def session[S <: Session]: S = macro Session.session[S]
+
+  def withServerSession[R](session: UndertowSession)(f: => R): R = {
+    _session.set(Some(session))
+    try {
+      f
+    } finally {
+      _session.remove()
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     val server = new Server("localhost", 8080)
     server.register("/", "text/html", (hse: HttpServerExchange) => {
