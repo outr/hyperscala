@@ -17,7 +17,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
 
   override def onConnect(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = {
     logger.info("WebSocket connected!")
-    val connection = new ServerConnection(this, channel)
+    val connection = new ServerConnection(this, exchange, channel)
     synchronized {
       _connections += connection
     }
@@ -33,6 +33,8 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       currentConnection.remove()
     }
   }
+
+  override def connection: ServerConnection = super.connection.asInstanceOf[ServerConnection]
 
   override def init(): Unit = {
     app.pathChanged.attach { evt =>
@@ -50,8 +52,8 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
             serverScreen.activate(connection)
             logger.info(s"Activated: $serverScreen")
             if (evt.requestContent) {
-              val html = serverScreen.html(partial = true)
-              app.screenContent := ScreenContent(html, evt.path, serverScreen.partialParentId)
+              val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
+              app.screenContent := ScreenContent(html, evt.path, serverScreen.asInstanceOf[PartialSupport].partialParentId)
             }
           }
           case None => // Nothing new set
@@ -62,7 +64,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   }
 }
 
-class ServerConnection(manager: ServerApplicationManager, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
+class ServerConnection(manager: ServerApplicationManager, val exchange: WebSocketHttpExchange, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
   override def app: WebApplication = manager.app
   val serverSession = Server.serverSession.getOrElse(throw new RuntimeException(s"No server session defined while initializing ServerConnection."))
   logger.info(s"ServerSession: $serverSession")

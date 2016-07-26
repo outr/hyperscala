@@ -6,6 +6,7 @@ import pl.metastack.metarx.Channel
 object ExampleApplication extends WebApplication("localhost", 8080) {
   val login = create[LoginScreen]
   val dashboard = create[DashboardScreen]
+  val error = server[ErrorScreen]
 }
 
 trait LoginScreen extends SimpleScreen {
@@ -17,6 +18,10 @@ trait LoginScreen extends SimpleScreen {
 
 trait DashboardScreen extends SimpleScreen {
   override def path: String = "/dashboard.html"
+}
+
+trait ErrorScreen extends Screen {
+  override def isPathMatch(path: String): Boolean = false
 }
 
 case class Authentication(username: String, password: String)

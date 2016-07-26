@@ -1,11 +1,11 @@
 package org.hyperscala
 
-import com.outr.scribe.Logging
-import io.undertow.{Handlers, Undertow}
-import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
+import com.outr.scribe.{Logging, Platform}
 import io.undertow.server.session.{InMemorySessionManager, SessionAttachmentHandler, SessionCookieConfig, Session => UndertowSession}
+import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
+import io.undertow.{Handlers, Undertow}
 
 import scala.language.experimental.macros
 import scala.language.implicitConversions
@@ -87,18 +87,30 @@ class Server(host: String, port: Int) extends Logging {
       try {
         exchange.addDefaultResponseListener(new DefaultResponseListener {
           override def handleDefaultResponse(exchange: HttpServerExchange): Boolean = if (exchange.getStatusCode >= 400) {
-            errorHandler.handleRequest(exchange)
+            errorSupport(errorHandler.handleRequest(exchange))
             true
           } else {
             false
           }
         })
-        val handler = mappedPathHandler.lookup(exchange.getRequestPath).orElse(defaultHandler)
-        logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
-        handler.foreach(_.handleRequest(exchange))
+        errorSupport {
+          val handler = mappedPathHandler.lookup(exchange.getRequestPath).orElse(defaultHandler)
+          logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
+          handler.foreach(_.handleRequest(exchange))
+        }
       } finally {
         Server._session.remove()
       }
+    }
+  }
+
+  protected def error(t: Throwable): Unit = logger.error(Platform.throwable2String(t))
+  protected def errorSupport[R](f: => R): R = try {
+    f
+  } catch {
+    case t: Throwable => {
+      error(t)
+      throw t
     }
   }
 }
@@ -148,7 +160,7 @@ object Server extends Logging {
   }
 }
 
-trait PathHandler {
+trait PathHandler extends HttpHandler {
   def handleRequest(exchange: HttpServerExchange): Unit
 }
 

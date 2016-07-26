@@ -14,9 +14,13 @@ trait RequestValidator extends ServerScreen {
     }
     case ValidationResult.Error(status, message) => {
       exchange.setStatusCode(status)
-      exchange.getResponseHeaders.put(new HttpString("ErrorMessage"), message)
+      exchange.getResponseHeaders.put(new HttpString(RequestValidator.HeaderKey), message)
     }
   }
+}
+
+object RequestValidator {
+  val HeaderKey = "ErrorMessage"
 }
 
 sealed trait ValidationResult

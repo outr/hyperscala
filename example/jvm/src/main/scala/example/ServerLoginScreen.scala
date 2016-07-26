@@ -3,10 +3,10 @@ package example
 import java.io.File
 
 import io.undertow.server.HttpServerExchange
-import org.hyperscala.{Connection, RequestValidator, Server, ServerScreen, ValidationResult}
 import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
+import org.hyperscala.{PartialSupport, Request, RequestValidator, Server, ServerScreen, ValidationResult}
 
-trait ServerLoginScreen extends LoginScreen with ServerScreen with RequestValidator {
+trait ServerLoginScreen extends LoginScreen with ServerScreen with PartialSupport with RequestValidator {
   // Authenticate the username / password on the server
   authenticate.attach { auth =>
     logger.info(s"Authentication request: ${auth.username} / ${auth.password} - Connection: ${app.connection}, Session: ${Server.session[ExampleSession]}")
@@ -21,13 +21,9 @@ trait ServerLoginScreen extends LoginScreen with ServerScreen with RequestValida
   override def template: File = new File("src/main/web/login.html")
   override def partialParentId: String = "content"
   override def partialSelector: Selector = ById("loginForm")
-  override def deltas(): List[Delta] = List(
+  override def deltas(request: Request): List[Delta] = List(
     Delta.ReplaceContent(ByTag("title"), "Modified Login Title")
   )
-
-  override def activate(connection: Connection): Unit = {
-    logger.info(s"Username: ${ExampleServer.session.username.get}")
-  }
 
   override def validate(exchange: HttpServerExchange): ValidationResult = {
     if (ExampleServer.session.username.get.isEmpty) {

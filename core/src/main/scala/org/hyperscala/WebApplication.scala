@@ -18,6 +18,7 @@ abstract class WebApplication(val host: String, val port: Int) extends BaseAppli
   def connection: Connection = manager.connection
 
   def create[S <: Screen]: S = macro Macros.screen[S]
+  def server[S <: Screen]: S = macro Macros.serverScreen[S]
   def communicationPath: String = "/communication"
 
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit = synchronized {
