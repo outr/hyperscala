@@ -32,7 +32,6 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
 
   override def handleRequest(exchange: HttpServerExchange): Unit = {
     val partial = Option(exchange.getQueryParameters.get("partial")).exists(_.contains("true"))
-    logger.info(s"handleRequest: ${exchange.getQueryParameters} / $partial")
     val html = this.html(partial)
     exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, html.length)
     exchange.getResponseHeaders.put(Headers.CONTENT_TYPE, "text/html")

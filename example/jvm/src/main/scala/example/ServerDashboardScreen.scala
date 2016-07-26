@@ -5,7 +5,7 @@ import java.io.File
 import org.hyperscala.{Connection, ServerScreen}
 import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
 
-trait ServerDashboardScreen extends DashboardScreen with ServerScreen {
+trait ServerDashboardScreen extends DashboardScreen with ServerScreen with UserRequestValidator {
   override def template: File = new File("src/main/web/example.html")
 
   override def partialParentId: String = "content"
