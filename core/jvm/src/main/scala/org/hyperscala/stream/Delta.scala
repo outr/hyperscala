@@ -53,6 +53,22 @@ class Repeat[Data] private[hyperscala](val selector: Selector, data: List[Data],
     }
   }
 }
+class Template private[hyperscala](val selector: Selector, deltas: List[Delta]) extends Delta {
+  override def apply(streamer: HTMLStream, tag: OpenTag): Unit = {
+    streamer.insert(tag.start, streamer.streamable.stream(deltas, Some(selector)))
+  }
+}
+class Grouped private[hyperscala](val selector: Selector, deltas: List[Delta]) extends Delta {
+  override def apply(streamer: HTMLStream, tag: OpenTag): Unit = {
+    deltas.zipWithIndex.foreach {
+      case (d, index) => {
+        streamer.grouped(index) {
+          d(streamer, tag)
+        }
+      }
+    }
+  }
+}
 
 object Delta {
   def Replace(selector: Selector, content: => String): Replace = new Replace(selector, () => content)
@@ -62,4 +78,6 @@ object Delta {
   def InsertLastChild(selector: Selector, content: => String): InsertLastChild = new InsertLastChild(selector, () => content)
   def InsertAfter(selector: Selector, content: => String): InsertAfter = new InsertAfter(selector, () => content)
   def Repeat[Data](selector: Selector, data: List[Data], changes: Data => List[Delta]): Repeat[Data] = new Repeat(selector, data, changes)
+  def Template(selector: Selector, deltas: List[Delta]): Template = new Template(selector, deltas)
+  def Grouped(selector: Selector, deltas: Delta*): Grouped = new Grouped(selector, deltas.toList)
 }

@@ -11,6 +11,41 @@ object HTMLParser {
   private val CloseTagRegex = """</(\S+).*>""".r
 
   def main(args: Array[String]): Unit = {
+    complex()
+  }
+
+  def complex(): Unit = {
+    val file = new File("complex.html")
+    println(file.getAbsolutePath)
+    val streamable = apply(file)
+
+    val deltas = List(
+      Delta.ReplaceContent(ByTag("title"), "Modified Title"),
+      Delta.ReplaceContent(ById("list"), ""),
+      Delta.Grouped(ByClass("type1"),
+        Delta.Template(ByClass("type2"), List(
+          Delta.ReplaceContent(ByClass("heading"), "Modified Type 2 Heading"),
+          Delta.ReplaceContent(ByClass("body"), "Modified Type 2 Body")
+        )),
+        Delta.Template(ByClass("type1"), List(
+          Delta.ReplaceContent(ByClass("heading"), "Modified Type 1 Heading"),
+          Delta.ReplaceContent(ByClass("body"), "Modified Type 1 Body")
+        )),
+        Delta.Template(ByClass("type1"), List(
+          Delta.ReplaceContent(ByClass("heading"), "Modified Type 1 Heading B"),
+          Delta.ReplaceContent(ByClass("body"), "Modified Type 1 Body B")
+        )),
+        Delta.Template(ByClass("type2"), List(
+          Delta.ReplaceContent(ByClass("heading"), "Modified Type 2 Heading B"),
+          Delta.ReplaceContent(ByClass("body"), "Modified Type 2 Body B")
+        ))
+      )
+    )
+    val html = streamable.stream(deltas)
+    println(html)
+  }
+
+  def simple(): Unit = {
     val file = new File("simple.html")
     val streamable = apply(file)
 

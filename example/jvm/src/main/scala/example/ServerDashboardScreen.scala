@@ -12,9 +12,18 @@ trait ServerDashboardScreen extends DashboardScreen with ServerScreen with Parti
 
   override def partialSelector: Selector = ById("example")
 
-  override def deltas(request: Request): List[Delta] = List(
-    Delta.ReplaceContent(ByTag("title"), "Modified Example Title")
-  )
+  override def deltas(request: Request): List[Delta] = {
+
+
+    List(
+      Delta.ReplaceContent(ByTag("title"), "Modified Example Title"),
+      Delta.ReplaceContent(ById("list"), "")
+      //    Delta.Repeat(ByClass("item"), data, (d: ItemData) => List(
+      //      Delta.ReplaceContent(ByClass("itemName"), d.name),
+      //      Delta.ReplaceContent(ByClass("itemValue"), d.value)
+      //    ))
+    )
+  }
 
   override def activate(connection: ServerConnection): Unit = {
     logger.info(s"DashboardScreen activated!")
