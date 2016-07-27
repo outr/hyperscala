@@ -6,9 +6,9 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 
 object HTMLParser {
-  private val SelfClosingTagRegex = """<(\S+)(.*)/>""".r
-  private val OpenTagRegex = """<(\S+)(.*)>""".r
-  private val CloseTagRegex = """</(\S+).*>""".r
+  private val SelfClosingTagRegex = """(?s)<(\S+)(.*)/>""".r
+  private val OpenTagRegex = """(?s)<(\S+)(.*)>""".r
+  private val CloseTagRegex = """(?s)</(\S+).*>""".r
 
   def main(args: Array[String]): Unit = {
     complex()

@@ -40,7 +40,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
     app.pathChanged.attach { evt =>
       val previousScreen = connection.screen.get
       val newScreen = app.screens.find(_.isPathMatch(evt.path))
-      logger.info(s"Path Changed: $evt, previous: $previousScreen, new: $newScreen")
+      logger.debug(s"Path Changed: $evt, previous: $previousScreen, new: $newScreen")
       if (previousScreen != newScreen) {
         previousScreen match {
           case Some(previous) => previous.asInstanceOf[ServerScreen].deactivate(connection)
@@ -50,7 +50,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
           case Some(scrn) => {
             val serverScreen = scrn.asInstanceOf[ServerScreen]
             serverScreen.activate(connection)
-            logger.info(s"Activated: $serverScreen")
+            logger.debug(s"Activated: $serverScreen")
             if (evt.requestContent) {
               val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
               app.screenContent := ScreenContent(html, evt.path, serverScreen.asInstanceOf[PartialSupport].partialParentId)

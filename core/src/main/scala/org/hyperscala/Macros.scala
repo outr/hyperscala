@@ -18,7 +18,7 @@ object Macros {
 
     val typeString = s.tpe.toString
     val (preType, postType) = if (typeString.indexOf('.') != -1) {
-      val index = typeString.indexOf('.')
+      val index = typeString.lastIndexOf('.')
       typeString.substring(0, index + 1) -> typeString.substring(index + 1)
     } else {
       "" -> typeString
@@ -56,7 +56,7 @@ object Macros {
 
     val typeString = s.tpe.toString
     val (preType, postType) = if (typeString.indexOf('.') != -1) {
-      val index = typeString.indexOf('.')
+      val index = typeString.lastIndexOf('.')
       typeString.substring(0, index + 1) -> typeString.substring(index + 1)
     } else {
       "" -> typeString
