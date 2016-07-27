@@ -5,7 +5,7 @@ import scoverage.ScoverageSbtPlugin.autoImport._
 
 object HyperscalaBuild extends Build {
   lazy val root = project.in(file("."))
-    .aggregate(baseJS, baseJVM, client, server, exampleJS, exampleJVM)
+    .aggregate(baseJS, baseJVM, coreJS, coreJVM, exampleJS, exampleJVM)
     .settings(sharedSettings())
     .settings(publishArtifact := false)
 
@@ -69,8 +69,8 @@ object HyperscalaBuild extends Build {
       ),
       coverageEnabled in Test := true
     )
-  lazy val client = core.js.dependsOn(baseJS)
-  lazy val server = core.jvm.dependsOn(baseJVM)
+  lazy val coreJS = core.js.dependsOn(baseJS)
+  lazy val coreJVM = core.jvm.dependsOn(baseJVM)
 
   lazy val example = crossProject.crossType(HyperscalaCrossType).in(file("example"))
     .settings(sharedSettings(Some("example")): _*)
@@ -88,8 +88,8 @@ object HyperscalaBuild extends Build {
     .jvmSettings(
       coverageEnabled in Test := true
     )
-  lazy val exampleJS = example.js.dependsOn(client)
-  lazy val exampleJVM = example.jvm.dependsOn(server)
+  lazy val exampleJS = example.js.dependsOn(coreJS)
+  lazy val exampleJVM = example.jvm.dependsOn(coreJVM)
 
   private def sharedSettings(projectName: Option[String] = None) = Seq(
     name := s"${Details.name}${projectName.map(pn => s"-$pn").getOrElse("")}",
