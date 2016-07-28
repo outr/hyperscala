@@ -1,6 +1,9 @@
 package org.hyperscala
 
+import java.nio.file.Path
+
 import com.outr.scribe.{Logging, Platform}
+import io.undertow.server.handlers.resource.{ClassPathResourceManager, PathResourceManager, ResourceManager}
 import io.undertow.server.session.{InMemorySessionManager, SessionAttachmentHandler, SessionCookieConfig, Session => UndertowSession}
 import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
@@ -19,8 +22,15 @@ class Server(host: String, port: Int) extends Logging {
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
     setNext(handler)
   }
+  private var resourceManagers = List.empty[ResourceManager]
+  def classpathResources(classLoader: ClassLoader = Thread.currentThread().getContextClassLoader, prefix: String = ""): Unit = synchronized {
+    resourceManagers = new ClassPathResourceManager(classLoader, prefix) :: resourceManagers
+  }
+  def pathResources(path: Path, transferMinSize: Long = 100L): Unit = synchronized {
+    resourceManagers = new PathResourceManager(path, transferMinSize) :: resourceManagers
+  }
 
-  var defaultHandler: Option[PathHandler] = None
+  private var defaultHandler: Option[PathHandler] = None
   var errorHandler: HttpHandler = new HttpHandler {
     override def handleRequest(exchange: HttpServerExchange): Unit = {
       val errorPage =
@@ -39,6 +49,9 @@ class Server(host: String, port: Int) extends Logging {
   }
 
   def start(): Unit = synchronized {
+    if (resourceManagers.nonEmpty) {
+      defaultHandler = Some(HttpPathHandler(Handlers.resource(new MultiResourceManager(resourceManagers.reverse: _*))))
+    }
     val server = Undertow.builder()
       .addHttpListener(port, host)
       .setHandler(sessionAttachmentHandler)
