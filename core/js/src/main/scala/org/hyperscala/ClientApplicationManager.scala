@@ -60,7 +60,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     // Register listener for Screen content
     app.screenContent.attach { evt =>
       val s = app.screens.find(_.isPathMatch(evt.path)).asInstanceOf[Option[ClientScreen]]
-      logger.info(s"Received Screen content: ${evt.content} for ${evt.path} (screen: $s)")
+      logger.debug(s"Received Screen content: ${evt.content} for ${evt.path} (screen: $s)")
       s.get.load(Some(evt))
     }
 
