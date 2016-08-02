@@ -135,10 +135,14 @@ object Server extends Logging {
   def serverSession: Option[UndertowSession] = _session.get()
   def session[S <: Session]: S = macro Session.session[S]
 
-  def withServerSession[R](session: UndertowSession)(f: => R): R = {
+  private var wrapper: (() => Unit) => Unit = (f: () => Unit) => f()
+
+  def wrap(wrapper: (() => Unit) => Unit): Unit = this.wrapper = wrapper
+
+  def withServerSession(session: UndertowSession)(f: => Unit): Unit = {
     _session.set(Some(session))
     try {
-      f
+      wrapper(() => f)
     } finally {
       _session.remove()
     }

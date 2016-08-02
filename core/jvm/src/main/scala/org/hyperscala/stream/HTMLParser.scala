@@ -140,10 +140,11 @@ class HTMLParser(input: InputStream) {
       b.clear()
       b.append(c)
       tagStart = position
-    } else if (c == '>') {
+    } else if (tagStart != -1 && c == '>') {
       tagEnd = position + 1
       parseTag()
       b.clear()
+      tagStart = -1
     }
 
     position += 1
