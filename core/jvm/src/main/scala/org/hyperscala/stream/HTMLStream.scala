@@ -66,6 +66,7 @@ class HTMLStream(val streamable: StreamableHTML) {
       val post = reader.readString(position, end - position, channel)
       output.append(post)
     }
+    output.append('\n')
     output.toString()
   }
 }
