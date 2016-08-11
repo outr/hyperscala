@@ -6,7 +6,7 @@ import com.outr.scribe.Logging
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.Headers
 import io.undertow.websockets.spi.WebSocketHttpExchange
-import org.hyperscala.stream.{Delta, HTMLParser}
+import org.hyperscala.stream.{ByTag, Delta, HTMLParser}
 
 trait ServerScreen extends Screen with ExplicitHandler with Logging {
   lazy val streamable = HTMLParser(template)
@@ -17,6 +17,8 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
   def template: File
 
   def deltas(request: Request): List[Delta]
+
+  def title(): String = streamable.stream(Nil, Some(ByTag("title")), includeTag = false)
 
   def html(request: Request, partial: Boolean): String = {
     val selector = if (partial) {
