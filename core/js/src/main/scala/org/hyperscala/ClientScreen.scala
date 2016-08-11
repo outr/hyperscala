@@ -10,7 +10,7 @@ trait ClientScreen extends Screen {
 
   type Path = String
 
-  def path: Path
+  def path: Option[Path]
 
   final def show(): Unit = if (loaded) {
     activate()
@@ -20,7 +20,9 @@ trait ClientScreen extends Screen {
     content match {
       case Some(c) => {
         val parent = document.getElementById(c.parentId)
-        parent.innerHTML += c.content
+        val temp = document.createElement("div")
+        temp.innerHTML = c.content
+        parent.appendChild(temp.firstChild)
       }
       case None => // First load
     }

@@ -102,17 +102,21 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
       screenOption match {
         case Some(scrn) => scrn match {
           case s: ClientScreen => {
-            val path = s.path
-            if (firstScreen) {
-              firstScreen = false
-            } else if (!popping) {
-              if (replace) {
-                logger.info(s"Replacing state: $path")
-                window.history.replaceState(path, path, path)
-              } else {
-                logger.info(s"Pushing state: $path")
-                window.history.pushState(path, path, path)
+            s.path match {
+              case Some(path) => {
+                if (firstScreen) {
+                  firstScreen = false
+                } else if (!popping) {
+                  if (replace) {
+                    logger.info(s"Replacing state: $path")
+                    window.history.replaceState(path, path, path)
+                  } else {
+                    logger.info(s"Pushing state: $path")
+                    window.history.pushState(path, path, path)
+                  }
+                }
               }
+              case None => // Screen doesn't affect history
             }
             updateState()
             s.show()

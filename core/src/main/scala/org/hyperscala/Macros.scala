@@ -76,7 +76,7 @@ object Macros {
               override def init(): Unit = {}
               override def activate(): Unit = {}
               override def deactivate(): Unit = {}
-              override def path: String = ""
+              override def path: Option[String] = None
 
               override def toString(): String = $screenTypeString
            }
