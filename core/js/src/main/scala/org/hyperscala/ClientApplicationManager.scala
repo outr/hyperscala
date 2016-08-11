@@ -58,10 +58,10 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     s.load(None)
 
     // Register listener for Screen content
-    app.screenContent.attach { evt =>
-      val s = app.screens.find(_.isPathMatch(evt.path)).asInstanceOf[Option[ClientScreen]]
-      logger.debug(s"Received Screen content: ${evt.content} for ${evt.path} (screen: $s)")
-      s.get.load(Some(evt))
+    app.screenContentResponse.attach { evt =>
+      val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}.")).asInstanceOf[ClientScreen]
+      logger.debug(s"Received Screen content: ${evt.content} for ${evt.screenName} (screen: $screen)")
+      screen.load(Some(evt))
     }
 
     // Listen for history changes
@@ -102,6 +102,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
       screenOption match {
         case Some(scrn) => scrn match {
           case s: ClientScreen => {
+            logger.info(s"Changing screen to: $s")
             s.path match {
               case Some(path) => {
                 if (firstScreen) {
@@ -118,6 +119,9 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
               }
               case None => // Screen doesn't affect history
             }
+            if (!s.loaded) {
+              app.screenContentRequest := ScreenContentRequest(s.screenName)
+            }
             updateState()
             s.show()
           }
@@ -133,8 +137,8 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   private def updateState(): Unit = if (document.location.pathname != previousState) {
     logger.info(s"Updating state from ${previousState} to ${document.location.pathname}")
     previousState = document.location.pathname
-    val s = updateScreen()
-    app.pathChanged := PathChanged(document.location.pathname, requestContent = !s.get.loaded)
+    val s = updateScreen().get
+    app.pathChanged := PathChanged(document.location.pathname)
   }
 
   override def send(id: Int, json: String): Unit = {

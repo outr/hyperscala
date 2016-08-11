@@ -16,7 +16,7 @@ trait ClientScreen extends Screen {
     activate()
   }
 
-  private[hyperscala] def load(content: Option[ScreenContent]): Unit = if (!loaded) {
+  private[hyperscala] def load(content: Option[ScreenContentResponse]): Unit = if (!loaded) {
     content match {
       case Some(c) => {
         val parent = document.getElementById(c.parentId)

@@ -51,15 +51,17 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
             val serverScreen = scrn.asInstanceOf[ServerScreen]
             serverScreen.activate(connection)
             logger.debug(s"Activated: $serverScreen")
-            if (evt.requestContent) {
-              val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
-              app.screenContent := ScreenContent(html, evt.path, serverScreen.asInstanceOf[PartialSupport].partialParentId)
-            }
           }
           case None => // Nothing new set
         }
         connection.screen := newScreen
       }
+    }
+    app.screenContentRequest.attach { evt =>
+      val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}."))
+      val serverScreen = screen.asInstanceOf[ServerScreen]
+      val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
+      app.screenContentResponse := ScreenContentResponse(html, evt.screenName, serverScreen.asInstanceOf[PartialSupport].partialParentId)
     }
   }
 }

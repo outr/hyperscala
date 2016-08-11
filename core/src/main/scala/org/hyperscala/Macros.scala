@@ -37,6 +37,7 @@ object Macros {
       q"""
          val webApp = ${c.prefix.tree}
          new $screenType {
+          override def screenName: String = $typeString
           override def app = webApp
 
           override def toString(): String = $screenTypeString
@@ -71,6 +72,7 @@ object Macros {
         q"""
            val webApp = ${c.prefix.tree}
            new ${s.tpe} with org.hyperscala.ClientScreen {
+              override def screenName: String = $typeString
               override def app = webApp
 
               override def init(): Unit = {}
@@ -91,6 +93,7 @@ object Macros {
         q"""
          val webApp = ${c.prefix.tree}
          new $screenType {
+          override def screenName: String = $typeString
           override def app = webApp
 
           override def toString(): String = $screenTypeString

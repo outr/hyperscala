@@ -7,11 +7,13 @@ import scala.language.experimental.macros
 abstract class WebApplication(val host: String, val port: Int) extends BaseApplication {
   override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   override protected[hyperscala] var _screens = Vector.empty[BaseScreen]
+  private[hyperscala] var screensByName = Map.empty[String, Screen]
 
   lazy val manager: ApplicationManager = createApplicationManager()
 
   val pathChanged: Channel[PathChanged] = register[PathChanged]
-  val screenContent: Channel[ScreenContent] = register[ScreenContent]
+  val screenContentRequest: Channel[ScreenContentRequest] = register[ScreenContentRequest]
+  val screenContentResponse: Channel[ScreenContentResponse] = register[ScreenContentResponse]
 
   def screens: Vector[Screen] = _screens.asInstanceOf[Vector[Screen]]
 
@@ -33,4 +35,6 @@ abstract class WebApplication(val host: String, val port: Int) extends BaseAppli
   }
 
   def init(): Unit = manager.init()
+
+  def byName(screenName: String): Option[Screen] = screensByName.get(screenName)
 }
