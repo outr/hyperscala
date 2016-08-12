@@ -1,7 +1,7 @@
 package example
 
 import com.outr.scribe.Logging
-import org.hyperscala.SimpleClientScreen
+import org.hyperscala._
 import org.scalajs.dom._
 
 trait ClientLoginScreen extends LoginScreen with Logging with SimpleClientScreen[html.Form] {
