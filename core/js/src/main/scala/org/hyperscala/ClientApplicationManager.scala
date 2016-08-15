@@ -42,6 +42,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     }
     webSocket.onmessage = (evt: MessageEvent) => {
       val messageData = evt.data.toString
+      logger.debug(s"Received: $messageData")
       val index = messageData.indexOf(':')
       if (index == -1) {
         logger.error(s"Ignoring invalid message: $messageData")

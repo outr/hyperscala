@@ -27,7 +27,7 @@ abstract class WebApplication(val host: String, val port: Int) extends BaseAppli
     val position = picklers.length
     picklers = picklers :+ pickler
     pickler.channel.attach { t =>
-      if (!pickler.receiving.get()) {
+      if (!pickler.isReceiving(t)) {
         val json = pickler.write(t)
         manager.connection.send(position, json)
       }

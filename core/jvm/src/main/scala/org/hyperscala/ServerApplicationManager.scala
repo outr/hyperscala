@@ -82,6 +82,7 @@ class ServerConnection(manager: ServerApplicationManager, val exchange: WebSocke
 
   override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = Server.withServerSession(serverSession) {
     val data = message.getData
+    logger.debug(s"Received: $data")
     val index = data.indexOf(':')
     if (index == -1) {
       logger.error(s"Ignoring invalid message: $data")
