@@ -136,11 +136,11 @@ class HTMLParser(input: InputStream) {
       }
     } else if (c == '\n' || c == '\r') {
       quotes = false
-    } else if (c == '<') {
+    } else if (c == '<' && !quotes) {
       b.clear()
       b.append(c)
       tagStart = position
-    } else if (tagStart != -1 && c == '>') {
+    } else if (tagStart != -1 && c == '>' && !quotes) {
       tagEnd = position + 1
       parseTag()
       b.clear()
@@ -199,6 +199,9 @@ class HTMLParser(input: InputStream) {
 
   @tailrec
   private def closeUntil(tagName: String): OpenTag = {
+    if (open.isEmpty) {
+      throw new RuntimeException(s"Missing close tag for $tagName!")
+    }
     val t = open.pop()
     if (t.tagName.equalsIgnoreCase(tagName)) {
       t

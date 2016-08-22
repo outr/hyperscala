@@ -79,9 +79,19 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     screen.attach(screenChanged)
   }
 
+  def pushPath(path: String): Unit = {
+    window.history.pushState(path, path, path)
+    updateScreen()
+  }
+
+  def replacePath(path: String): Unit = {
+    window.history.replaceState(path, path, path)
+    updateScreen()
+  }
+
   private var previous: Option[BaseScreen] = None
 
-  private def updateScreen(): Option[ClientScreen] = {
+  def updateScreen(): Option[ClientScreen] = {
     val path = document.location.pathname
     val s = app.screens.find(_.isPathMatch(path)).asInstanceOf[Option[ClientScreen]]
     if (screen.get != s) {

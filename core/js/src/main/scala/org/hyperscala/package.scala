@@ -12,7 +12,10 @@ package object hyperscala {
     document.getElementsByClassName(className).toVector.map(_.asInstanceOf[T])
   }
 
-  def byId[T <: HTMLElement](id: String): T = document.getElementById(id).asInstanceOf[T]
+  def byId[T <: HTMLElement](id: String): T = Option(document.getElementById(id).asInstanceOf[T]) match {
+    case Some(t) => t
+    case None => throw new RuntimeException(s"Unable to find element by id '$id'.")
+  }
 
   implicit class HTMLElementExtras(e: HTMLElement) {
     def byTag[T <: HTMLElement](tagName: String): Vector[T] = {
