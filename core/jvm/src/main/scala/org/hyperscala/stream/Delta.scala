@@ -21,6 +21,16 @@ class ReplaceAttribute private[hyperscala](val selector: Selector, attributeName
     })
   }
 }
+class Processor private[hyperscala](val selector: Selector, replace: Boolean, onlyOpenTag: Boolean, processor: (OpenTag, String) => String) extends Delta {
+  override def apply(streamer: HTMLStream, tag: OpenTag): Unit = {
+    val end = if (onlyOpenTag) {
+      tag.end
+    } else {
+      tag.close.map(_.end).getOrElse(tag.end)
+    }
+    streamer.process(tag.start, end, processor.curried(tag), replace = replace)
+  }
+}
 class InsertBefore private[hyperscala](val selector: Selector, val content: () => String) extends Delta {
   override def apply(streamer: HTMLStream, tag: OpenTag): Unit = {
     streamer.insert(tag.start, content())
@@ -83,6 +93,7 @@ class Grouped private[hyperscala](val selector: Selector, deltas: List[Delta]) e
 
 object Delta {
   def Replace(selector: Selector, content: => String): Replace = new Replace(selector, () => content)
+  def Process(selector: Selector, replace: Boolean, onlyOpenTag: Boolean, processor: (OpenTag, String) => String): Processor = new Processor(selector, replace, onlyOpenTag, processor)
   def InsertBefore(selector: Selector, content: => String): InsertBefore = new InsertBefore(selector, () => content)
   def InsertFirstChild(selector: Selector, content: => String): InsertFirstChild = new InsertFirstChild(selector, () => content)
   def ReplaceContent(selector: Selector, content: => String): ReplaceContent = new ReplaceContent(selector, () => content)

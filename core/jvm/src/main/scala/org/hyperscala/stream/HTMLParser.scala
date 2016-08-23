@@ -54,7 +54,6 @@ object HTMLParser {
         ))
       ),
       Delta.ReplaceAttribute(ById("googleLink"), "href", "http://google.com")
-//      Delta.Replace(ById("googleLink"), "TESTING")
     )
     val html = streamable.stream(deltas)
     println(html)

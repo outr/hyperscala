@@ -26,9 +26,9 @@ class HTMLStream(val streamable: StreamableHTML) extends Logging {
     add(Skip(start, end, priority))
   }
 
-  def process(start: Int, end: Int, processor: String => String, priority: Int = 0): Unit = {
+  def process(start: Int, end: Int, processor: String => String, priority: Int = 0, replace: Boolean = true): Unit = {
     add(Process(start, end, processor, priority))
-    add(Skip(start, end, priority))
+    if (replace) add(Skip(start, end, priority))
   }
 
   def reposition(position: Int, priority: Int = 0): Unit = add(Reposition(position, priority))
