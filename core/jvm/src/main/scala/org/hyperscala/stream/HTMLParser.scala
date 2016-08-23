@@ -10,6 +10,19 @@ object HTMLParser {
   private val OpenTagRegex = """(?s)<(\S+)(.*)>""".r
   private val CloseTagRegex = """(?s)</(\S+).*>""".r
 
+  /**
+    * If set to true the stored tag attributes will be limited to those in validAttributes.
+    *
+    * Defaults to false.
+    */
+  var filterAttributes = false
+  /**
+    * The set of attributes to limit to if filterAttributes is set to true.
+    *
+    * Defaults to "id" and "class".
+    */
+  var validAttributes = Set("id", "class")
+
   def main(args: Array[String]): Unit = {
     complex()
   }
@@ -39,7 +52,8 @@ object HTMLParser {
           Delta.ReplaceContent(ByClass("heading"), "Modified Type 2 Heading B"),
           Delta.ReplaceContent(ByClass("body"), "Modified Type 2 Body B")
         ))
-      )
+      ),
+      Delta.ReplaceAttribute(ById("googleLink"), "href", """href="http://google.com"""")
     )
     val html = streamable.stream(deltas)
     println(html)
@@ -83,9 +97,9 @@ object HTMLParser {
       var byTag = Map.empty[String, Set[OpenTag]]
       tags.foreach { tag =>
         if (tag.attributes.contains("id")) {
-          byId += tag.attributes("id") -> tag
+          byId += tag.attributes("id").value -> tag
         }
-        tag.attributes.getOrElse("class", "").split(" ").foreach { className =>
+        tag.attributes.get("class").map(_.value).getOrElse("").split(" ").foreach { className =>
           val cn = className.trim
           if (cn.nonEmpty) {
             var classTags = byClass.getOrElse(cn, Set.empty[OpenTag])
@@ -169,32 +183,43 @@ class HTMLParser(input: InputStream) {
     }
   }
 
-  private val validAttributes = Set("id", "class")
-
-  private def parseAttributes(attributes: String): Map[String, String] = {
+  private def parseAttributes(attributes: String): Map[String, Attribute] = {
     val sb = new StringBuilder
     var quoted = false
     var key = ""
-    var map = Map.empty[String, String]
-    attributes.foreach { c =>
-      if (c == '"') {
-        if (quoted) {
-          map += key -> sb.toString()
-          quoted = false
-          sb.clear()
+    var map = Map.empty[String, Attribute]
+    var start = -1
+    attributes.zipWithIndex.foreach {
+      case (c, index) => {
+        if (c == '"') {
+          if (quoted) {
+            val attribute = Attribute(sb.toString(), start, index + tagStart + 3)
+            map += key -> attribute
+            println(s"Key: $key, Value: $attribute")
+            start = -1
+            quoted = false
+            sb.clear()
+          } else {
+            quoted = true
+          }
+        } else if ((c == '=' || c == ' ') && !quoted) {
+          if (sb.nonEmpty) {
+            key = sb.toString()
+            sb.clear()
+          }
         } else {
-          quoted = true
+          if (start == -1) {
+            start = tagStart + index + 2
+          }
+          sb.append(c)
         }
-      } else if ((c == '=' || c == ' ') && !quoted) {
-        if (sb.nonEmpty) {
-          key = sb.toString()
-          sb.clear()
-        }
-      } else {
-        sb.append(c)
       }
     }
-    map.filter(t => validAttributes.contains(t._1))
+    if (filterAttributes) {
+      map.filter(t => validAttributes.contains(t._1))
+    } else {
+      map
+    }
   }
 
   @tailrec
@@ -211,3 +236,5 @@ class HTMLParser(input: InputStream) {
     }
   }
 }
+
+case class Attribute(value: String, start: Int, end: Int)
