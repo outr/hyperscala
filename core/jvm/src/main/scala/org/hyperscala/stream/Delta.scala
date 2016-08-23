@@ -11,10 +11,14 @@ class Replace private[hyperscala](val selector: Selector, val content: () => Str
   }
 }
 class ReplaceAttribute private[hyperscala](val selector: Selector, attributeName: String, val content: () => String) extends Delta {
+  private val AttributeRegex = s"""$attributeName="(.*?)"""".r
+
   override def apply(streamer: HTMLStream, tag: OpenTag): Unit = {
-    println(s"Attributes: ${tag.attributes} for $tag (selector: $selector)")
-    val attribute = tag.attributes(attributeName)
-    streamer.replace(attribute.start, attribute.end, content())
+    streamer.process(tag.start, tag.end, (block: String) => {
+      AttributeRegex.replaceAllIn(block, replacer => {
+        s"""$attributeName="${content()}""""
+      })
+    })
   }
 }
 class InsertBefore private[hyperscala](val selector: Selector, val content: () => String) extends Delta {

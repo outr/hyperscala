@@ -53,7 +53,8 @@ object HTMLParser {
           Delta.ReplaceContent(ByClass("body"), "Modified Type 2 Body B")
         ))
       ),
-      Delta.ReplaceAttribute(ById("googleLink"), "href", """href="http://google.com"""")
+      Delta.ReplaceAttribute(ById("googleLink"), "href", "http://google.com")
+//      Delta.Replace(ById("googleLink"), "TESTING")
     )
     val html = streamable.stream(deltas)
     println(html)
@@ -97,9 +98,9 @@ object HTMLParser {
       var byTag = Map.empty[String, Set[OpenTag]]
       tags.foreach { tag =>
         if (tag.attributes.contains("id")) {
-          byId += tag.attributes("id").value -> tag
+          byId += tag.attributes("id") -> tag
         }
-        tag.attributes.get("class").map(_.value).getOrElse("").split(" ").foreach { className =>
+        tag.attributes.getOrElse("class", "").split(" ").foreach { className =>
           val cn = className.trim
           if (cn.nonEmpty) {
             var classTags = byClass.getOrElse(cn, Set.empty[OpenTag])
@@ -183,20 +184,16 @@ class HTMLParser(input: InputStream) {
     }
   }
 
-  private def parseAttributes(attributes: String): Map[String, Attribute] = {
+  private def parseAttributes(attributes: String): Map[String, String] = {
     val sb = new StringBuilder
     var quoted = false
     var key = ""
-    var map = Map.empty[String, Attribute]
-    var start = -1
+    var map = Map.empty[String, String]
     attributes.zipWithIndex.foreach {
       case (c, index) => {
         if (c == '"') {
           if (quoted) {
-            val attribute = Attribute(sb.toString(), start, index + tagStart + 3)
-            map += key -> attribute
-            println(s"Key: $key, Value: $attribute")
-            start = -1
+            map += key -> sb.toString()
             quoted = false
             sb.clear()
           } else {
@@ -208,9 +205,6 @@ class HTMLParser(input: InputStream) {
             sb.clear()
           }
         } else {
-          if (start == -1) {
-            start = tagStart + index + 2
-          }
           sb.append(c)
         }
       }
@@ -236,5 +230,3 @@ class HTMLParser(input: InputStream) {
     }
   }
 }
-
-case class Attribute(value: String, start: Int, end: Int)

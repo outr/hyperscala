@@ -2,7 +2,9 @@ package org.hyperscala.stream
 
 import java.nio.channels.SeekableByteChannel
 
-class HTMLStream(val streamable: StreamableHTML) {
+import com.outr.scribe.Logging
+
+class HTMLStream(val streamable: StreamableHTML) extends Logging {
   private var actions = Set.empty[StreamAction]
   private var group: Option[Group] = None
 
@@ -21,6 +23,11 @@ class HTMLStream(val streamable: StreamableHTML) {
 
   def replace(start: Int, end: Int, content: String, priority: Int = 0): Unit = {
     add(Insert(start, content, priority))
+    add(Skip(start, end, priority))
+  }
+
+  def process(start: Int, end: Int, processor: String => String, priority: Int = 0): Unit = {
+    add(Process(start, end, processor, priority))
     add(Skip(start, end, priority))
   }
 
@@ -58,6 +65,11 @@ class HTMLStream(val streamable: StreamableHTML) {
         case s: Skip => position = s.end
         case r: Reposition => position = r.position
         case g: Group => g.actions.foreach(processAction)
+        case p: Process => {
+          val block = reader.readString(p.position, p.end - p.position, channel)
+          val content = p.processor(block)
+          output.append(content)
+        }
       }
     }
 

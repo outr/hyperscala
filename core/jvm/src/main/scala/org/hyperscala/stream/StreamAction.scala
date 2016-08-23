@@ -14,3 +14,5 @@ case class Reposition(position: Int, priority: Int) extends StreamAction
 case class Group(actions: List[StreamAction], priority: Int) extends StreamAction {
   lazy val position = actions.foldLeft(Int.MaxValue)((min, action) => math.min(min, action.position))
 }
+
+case class Process(position: Int, end: Int, processor: String => String, priority: Int) extends StreamAction
