@@ -4,12 +4,12 @@ import java.io.File
 
 import io.undertow.server.HttpServerExchange
 import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
-import org.hyperscala.{PartialSupport, Request, RequestValidator, Server, ServerScreen, ValidationResult}
+import org.hyperscala.{PartialSupport, Request, RequestValidator, ServerScreen, ValidationResult}
 
 trait ServerLoginScreen extends LoginScreen with ServerScreen with PartialSupport with RequestValidator {
   // Authenticate the username / password on the server
   authenticate.attach { auth =>
-    logger.info(s"Authentication request: ${auth.username} / ${auth.password} - Connection: ${app.connection}, Session: ${Server.session[ExampleSession]}")
+    logger.info(s"Authentication request: ${auth.username} / ${auth.password} - Connection: ${app.connection}, Session: ${ExampleServer.session}")
     if (auth.username == "user" && auth.password == "password") {
       ExampleServer.session.username := Some(auth.username)
       response := AuthResponse(None)

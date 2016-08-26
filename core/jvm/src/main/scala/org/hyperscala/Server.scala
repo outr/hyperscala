@@ -4,7 +4,7 @@ import java.nio.file.Path
 
 import com.outr.scribe.{Logging, Platform}
 import io.undertow.server.handlers.resource.{ClassPathResourceManager, PathResourceManager, ResourceManager}
-import io.undertow.server.session.{InMemorySessionManager, SessionAttachmentHandler, SessionCookieConfig, Session => UndertowSession}
+import io.undertow.server.session.{SessionAttachmentHandler, SessionConfig, SessionCookieConfig, Session => UndertowSession}
 import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
@@ -13,11 +13,11 @@ import io.undertow.{Handlers, Undertow}
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 
-class Server(host: String, port: Int) extends Logging {
+class Server(host: String, port: Int, sessionDomain: Option[String] = None) extends Logging {
   private val handler = new ServerHandler
   private var instance: Option[Undertow] = None
   private val mappedPathHandler = new MappedPathHandler
-  private val sessionManager = new InMemorySessionManager("ServerSessionManager")
+  private val sessionManager = new io.undertow.server.session.InMemorySessionManager("ServerSessionManager")
   private val sessionConfig = new SessionCookieConfig
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
     setNext(handler)
@@ -95,9 +95,13 @@ class Server(host: String, port: Int) extends Logging {
   }
 
   class ServerHandler extends HttpHandler {
+    private val sessionConfig = new SessionCookieConfig {
+      sessionDomain.foreach(setDomain)
+    }
+
     override def handleRequest(exchange: HttpServerExchange): Unit = {
-      Server._session.set(Option(Sessions.getOrCreateSession(exchange)))
-      try {
+      exchange.putAttachment(SessionConfig.ATTACHMENT_KEY, sessionConfig)
+      Server.withServerSession(Sessions.getOrCreateSession(exchange)) {
         exchange.addDefaultResponseListener(new DefaultResponseListener {
           override def handleDefaultResponse(exchange: HttpServerExchange): Boolean = if (exchange.getStatusCode >= 400) {
             errorSupport(errorHandler.handleRequest(exchange))
@@ -111,8 +115,6 @@ class Server(host: String, port: Int) extends Logging {
           logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
           handler.foreach(_.handleRequest(exchange))
         }
-      } finally {
-        Server._session.remove()
       }
     }
   }
@@ -128,24 +130,62 @@ class Server(host: String, port: Int) extends Logging {
   }
 }
 
-object Server extends Logging {
-  private val _session = new ThreadLocal[Option[UndertowSession]] {
-    override def initialValue(): Option[UndertowSession] = None
+trait Store {
+  def apply[T](key: String): T
+  def get[T](key: String): Option[T]
+  def update[T](key: String, value: T): Unit
+  def remove(key: String): Unit
+
+  def getOrElse[T](key: String, default: => T): T = get[T](key).getOrElse(default)
+  def getOrSet[T](key: String, default: => T): T = synchronized {
+    get[T](key) match {
+      case Some(value) => value
+      case None => {
+        val value: T = default
+        update(key, value)
+        value
+      }
+    }
   }
-  def serverSession: Option[UndertowSession] = _session.get()
-  def session[S <: Session]: S = macro Session.session[S]
+}
+
+object Server extends Logging {
+  object request extends Store {
+    private val threadLocal = new ThreadLocal[Map[String, Any]]
+
+    def inScope: Boolean = Option(threadLocal.get()).isDefined
+    def map: Map[String, Any] = Option(threadLocal.get()).getOrElse(throw new RuntimeException("Not in a request scope."))
+    override def apply[T](key: String): T = threadLocal.get()(key).asInstanceOf[T]
+    override def get[T](key: String): Option[T] = threadLocal.get().get(key).asInstanceOf[Option[T]]
+    override def update[T](key: String, value: T): Unit = threadLocal.set(threadLocal.get() + (key -> value))
+    override def remove(key: String): Unit = threadLocal.set(threadLocal.get() - key)
+
+    def clear(): Unit = threadLocal.remove()
+
+    def scoped[R](f: => R): R = {
+      threadLocal.set(Map.empty[String, Any])
+      try {
+        f
+      } finally {
+        clear()
+      }
+    }
+  }
+  object session extends Store {
+    def undertowSession: UndertowSession = request[UndertowSession]("serverSession")
+    override def apply[T](key: String): T = get[T](key).getOrElse(throw new NullPointerException(s"$key is not defined in the session."))
+    override def get[T](key: String): Option[T] = Option(undertowSession.getAttribute(key).asInstanceOf[T])
+    override def update[T](key: String, value: T): Unit = undertowSession.setAttribute(key, value)
+    override def remove(key: String): Unit = undertowSession.removeAttribute(key)
+  }
 
   private var wrapper: (() => Unit) => Unit = (f: () => Unit) => f()
 
   def wrap(wrapper: (() => Unit) => Unit): Unit = this.wrapper = wrapper
 
-  def withServerSession(session: UndertowSession)(f: => Unit): Unit = {
-    _session.set(Some(session))
-    try {
-      wrapper(() => f)
-    } finally {
-      _session.remove()
-    }
+  def withServerSession(session: UndertowSession)(f: => Unit): Unit = request.scoped {
+    request("serverSession") = session
+    wrapper(() => f)
   }
 
   def main(args: Array[String]): Unit = {

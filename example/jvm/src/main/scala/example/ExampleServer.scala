@@ -7,7 +7,7 @@ import org.hyperscala._
 object ExampleServer {
   val server = Server(ExampleApplication)
 
-  def session: ExampleSession = Server.session[ExampleSession]
+  def session: ExampleSession = ExampleSession()
 
   def main(args: Array[String]): Unit = {
     server.pathResources(Paths.get("src/main/web/"))

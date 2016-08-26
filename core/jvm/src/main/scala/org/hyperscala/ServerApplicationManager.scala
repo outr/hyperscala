@@ -69,8 +69,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
 
 class ServerConnection(manager: ServerApplicationManager, val exchange: WebSocketHttpExchange, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
   override def app: WebApplication = manager.app
-  val serverSession = Server.serverSession.getOrElse(throw new RuntimeException(s"No server session defined while initializing ServerConnection."))
-  logger.info(s"ServerSession: $serverSession")
+  val serverSession = Server.session.undertowSession
 
   override def init(): Unit = {
     manager.synchronized {
