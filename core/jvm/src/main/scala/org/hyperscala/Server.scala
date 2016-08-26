@@ -197,9 +197,9 @@ object Server extends Logging {
     server.start()
   }
 
-  def apply(app: WebApplication): Server = {
+  def apply(app: WebApplication, host: String, port: Int, sessionDomain: Option[String] = None): Server = {
     // Instantiate Server
-    val server = new Server(app.host, app.port)
+    val server = new Server(host, port, sessionDomain)
 
     // Create WebSocket communication handler
     val webSocketCallback = app.manager.asInstanceOf[WebSocketConnectionCallback]

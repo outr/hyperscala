@@ -5,7 +5,7 @@ import java.nio.file.Paths
 import org.hyperscala._
 
 object ExampleServer {
-  val server = Server(ExampleApplication)
+  val server = Server(ExampleApplication, "localhost", 8080)
 
   def session: ExampleSession = ExampleSession()
 

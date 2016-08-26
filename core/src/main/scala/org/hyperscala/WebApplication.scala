@@ -4,7 +4,7 @@ import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
 
-abstract class WebApplication(val host: String, val port: Int) extends BaseApplication {
+abstract class WebApplication extends BaseApplication {
   override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   override protected[hyperscala] var _screens = Vector.empty[BaseScreen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]

@@ -1,10 +1,11 @@
 package org
 
+import com.outr.scribe.Logging
 import org.scalajs.dom._
 import org.scalajs.dom.ext._
 import org.scalajs.dom.raw.HTMLElement
 
-package object hyperscala {
+package object hyperscala extends Logging {
   def byTag[T <: HTMLElement](tagName: String): Vector[T] = {
     document.getElementsByTagName(tagName).toVector.map(_.asInstanceOf[T])
   }
@@ -14,7 +15,11 @@ package object hyperscala {
 
   def byId[T <: HTMLElement](id: String): T = Option(document.getElementById(id).asInstanceOf[T]) match {
     case Some(t) => t
-    case None => throw new RuntimeException(s"Unable to find element by id '$id'.")
+    case None => {
+      val message = s"Unable to find element by id '$id'."
+      logger.error(message)
+      throw new RuntimeException(message)
+    }
   }
 
   implicit class HTMLElementExtras(e: HTMLElement) {

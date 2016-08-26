@@ -3,7 +3,7 @@ package example
 import org.hyperscala.{Screen, SimpleScreen, WebApplication}
 import pl.metastack.metarx.Channel
 
-object ExampleApplication extends WebApplication("localhost", 8080) {
+object ExampleApplication extends WebApplication {
   val login = create[LoginScreen]
   val dashboard = create[DashboardScreen]
   val error = server[ErrorScreen]
