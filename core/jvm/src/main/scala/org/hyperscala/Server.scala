@@ -1,9 +1,6 @@
 package org.hyperscala
 
-import java.nio.file.Path
-
 import com.outr.scribe.{Logging, Platform}
-import io.undertow.server.handlers.resource.{ClassPathResourceManager, PathResourceManager, ResourceManager}
 import io.undertow.server.session.{SessionAttachmentHandler, SessionConfig, SessionCookieConfig, Session => UndertowSession}
 import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
@@ -22,13 +19,14 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
     setNext(handler)
   }
-  private var resourceManagers = List.empty[ResourceManager]
-  def classpathResources(classLoader: ClassLoader = Thread.currentThread().getContextClassLoader, prefix: String = ""): Unit = synchronized {
-    resourceManagers = new ClassPathResourceManager(classLoader, prefix) :: resourceManagers
-  }
-  def pathResources(path: Path, transferMinSize: Long = 100L): Unit = synchronized {
-    resourceManagers = new PathResourceManager(path, transferMinSize) :: resourceManagers
-  }
+  val resourceManager = new FunctionalResourceManager
+//  private var resourceManagers = List.empty[ResourceManager]
+//  def classpathResources(classLoader: ClassLoader = Thread.currentThread().getContextClassLoader, prefix: String = ""): Unit = synchronized {
+//    resourceManagers = new ClassPathResourceManager(classLoader, prefix) :: resourceManagers
+//  }
+//  def pathResources(path: Path, transferMinSize: Long = 100L): Unit = synchronized {
+//    resourceManagers = new PathResourceManager(path, transferMinSize) :: resourceManagers
+//  }
 
   private var defaultHandler: Option[PathHandler] = None
   var errorHandler: HttpHandler = new HttpHandler {
@@ -49,9 +47,11 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
   }
 
   def start(): Unit = synchronized {
-    if (resourceManagers.nonEmpty) {
-      defaultHandler = Some(HttpPathHandler(Handlers.resource(new MultiResourceManager(resourceManagers.reverse: _*))))
-    }
+    defaultHandler = Some(HttpPathHandler(new FunctionalResourceHandler(resourceManager)))
+//    if (resourceManagers.nonEmpty) {
+//      defaultHandler = Some(HttpPathHandler(Handlers.resource(new MultiResourceManager(resourceManagers.reverse: _*))))
+//
+//    }
     val server = Undertow.builder()
       .addHttpListener(port, host)
       .setHandler(sessionAttachmentHandler)
@@ -155,10 +155,10 @@ object Server extends Logging {
 
     def inScope: Boolean = Option(threadLocal.get()).isDefined
     def map: Map[String, Any] = Option(threadLocal.get()).getOrElse(throw new RuntimeException("Not in a request scope."))
-    override def apply[T](key: String): T = threadLocal.get()(key).asInstanceOf[T]
-    override def get[T](key: String): Option[T] = threadLocal.get().get(key).asInstanceOf[Option[T]]
-    override def update[T](key: String, value: T): Unit = threadLocal.set(threadLocal.get() + (key -> value))
-    override def remove(key: String): Unit = threadLocal.set(threadLocal.get() - key)
+    override def apply[T](key: String): T = map(key).asInstanceOf[T]
+    override def get[T](key: String): Option[T] = map.get(key).asInstanceOf[Option[T]]
+    override def update[T](key: String, value: T): Unit = threadLocal.set(map + (key -> value))
+    override def remove(key: String): Unit = threadLocal.set(map - key)
 
     def clear(): Unit = threadLocal.remove()
 
