@@ -1,6 +1,7 @@
 package org.hyperscala
 
 import java.io.{File, IOException}
+import java.nio.file.Path
 import java.util
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -9,7 +10,7 @@ import io.undertow.UndertowLogger
 import io.undertow.io.IoCallback
 import io.undertow.server.handlers.ResponseCodeHandler
 import io.undertow.server.handlers.cache.ResponseCache
-import io.undertow.server.handlers.resource.{DirectoryUtils, FileResource, FileResourceManager, RangeAwareResource, Resource, ResourceChangeEvent, ResourceChangeListener, ResourceHandler, ResourceManager}
+import io.undertow.server.handlers.resource.{ClassPathResourceManager, DirectoryUtils, FileResource, FileResourceManager, RangeAwareResource, Resource, ResourceChangeEvent, ResourceChangeListener, ResourceHandler, ResourceManager, URLResource}
 import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.{ByteRange, CanonicalPathUtils, DateUtils, ETagUtils, Headers, Methods, StatusCodes}
 import org.xnio.{FileChangeCallback, FileChangeEvent, OptionMap, Xnio}
@@ -49,6 +50,38 @@ class FunctionalResourceManager extends ResourceManager {
     }
   }
 
+  def pathMapping(path: Path, pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
+    this += new PathResourceMapping {
+      override def base: String = path.toAbsolutePath.toString
+
+      override def lookup(path: String): Option[Resource] = pathConversion(path).flatMap { updated =>
+        val file = new File(base, updated)
+        if (file.exists()) {
+          Some(new FileResource(file, fileResourceManager, updated))
+        } else {
+          None
+        }
+      }
+    }
+  }
+
+  def classPathMapping(path: String, pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
+    this += new ClassPathResourceMapping {
+      override def base: String = path match {
+        case _ if path.endsWith("/") => path.substring(0, path.length - 1)
+        case _ => path
+      }
+
+      override def lookup(path: String): Option[Resource] = pathConversion(path).flatMap { updated =>
+        val combined = s"$base$updated" match {
+          case c if c.startsWith("/") => c.substring(1)
+          case c => c
+        }
+        Option(getClass.getClassLoader.getResource(combined)).map(url => new URLResource(url, url.openConnection(), updated))
+      }
+    }
+  }
+
   def +=(mapping: ResourceMapping): Unit = synchronized {
     mappings += mapping
   }
@@ -64,6 +97,12 @@ trait ResourceMapping {
   def init(resourceManager: FunctionalResourceManager): Unit = {}
 
   def lookup(path: String): Option[Resource]
+}
+
+trait ClassPathResourceMapping extends ResourceMapping {
+  protected lazy val classPathResourceManager = new ClassPathResourceManager(getClass.getClassLoader)
+
+  def base: String
 }
 
 trait PathResourceMapping extends ResourceMapping {

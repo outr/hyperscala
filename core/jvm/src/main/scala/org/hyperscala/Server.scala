@@ -20,13 +20,6 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
     setNext(handler)
   }
   val resourceManager = new FunctionalResourceManager
-//  private var resourceManagers = List.empty[ResourceManager]
-//  def classpathResources(classLoader: ClassLoader = Thread.currentThread().getContextClassLoader, prefix: String = ""): Unit = synchronized {
-//    resourceManagers = new ClassPathResourceManager(classLoader, prefix) :: resourceManagers
-//  }
-//  def pathResources(path: Path, transferMinSize: Long = 100L): Unit = synchronized {
-//    resourceManagers = new PathResourceManager(path, transferMinSize) :: resourceManagers
-//  }
 
   private var defaultHandler: Option[PathHandler] = None
   var errorHandler: HttpHandler = new HttpHandler {
