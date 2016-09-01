@@ -6,12 +6,19 @@ import java.nio.file.StandardOpenOption
 
 import com.outr.scribe.Logging
 
-class StreamableHTML(file: File,
-                     isStale: => Boolean,
-                     val byId: Map[String, OpenTag],
-                     val byClass: Map[String, Set[OpenTag]],
-                     val byTag: Map[String, Set[OpenTag]]) extends Logging {
+class StreamableHTML(file: File, cacheBuilder: CacheBuilder) extends Logging {
+  private var cache = cacheBuilder.buildCache()
+
+  def byId: Map[String, OpenTag] = cache.byId
+  def byClass: Map[String, Set[OpenTag]] = cache.byClass
+  def byTag: Map[String, Set[OpenTag]] = cache.byTag
+
   def stream(deltas: List[Delta], selector: Option[Selector] = None, includeTag: Boolean = true): String = {
+    synchronized {
+      if (cacheBuilder.isStale) {
+        cache = cacheBuilder.buildCache()
+      }
+    }
     val channel = FileChannel.open(file.toPath, StandardOpenOption.READ)
     try {
       val streamer = new HTMLStream(this)
@@ -46,3 +53,12 @@ class StreamableHTML(file: File,
     }
   }
 }
+
+trait CacheBuilder {
+  def isStale: Boolean
+  def buildCache(): CachedInformation
+}
+
+case class CachedInformation(byId: Map[String, OpenTag],
+                             byClass: Map[String, Set[OpenTag]],
+                             byTag: Map[String, Set[OpenTag]])

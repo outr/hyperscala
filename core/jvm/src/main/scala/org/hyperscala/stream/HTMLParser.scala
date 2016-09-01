@@ -2,6 +2,8 @@ package org.hyperscala.stream
 
 import java.io.{File, FileInputStream, InputStream}
 
+import com.outr.scribe.Logging
+
 import scala.annotation.tailrec
 import scala.collection.mutable
 
@@ -87,34 +89,44 @@ object HTMLParser {
   }
 
   def apply(file: File): StreamableHTML = {
-    val lastModified = file.lastModified()
-    val input = new FileInputStream(file)
-    try {
-      val parser = new HTMLParser(input)
-      val tags = parser.parse()
-      var byId = Map.empty[String, OpenTag]
-      var byClass = Map.empty[String, Set[OpenTag]]
-      var byTag = Map.empty[String, Set[OpenTag]]
-      tags.foreach { tag =>
-        if (tag.attributes.contains("id")) {
-          byId += tag.attributes("id") -> tag
-        }
-        tag.attributes.getOrElse("class", "").split(" ").foreach { className =>
-          val cn = className.trim
-          if (cn.nonEmpty) {
-            var classTags = byClass.getOrElse(cn, Set.empty[OpenTag])
-            classTags += tag
-            byClass += cn -> classTags
+    val cacheBuilder = new CacheBuilder with Logging {
+      private var lastModified: Long = 0L
+
+      override def isStale: Boolean = lastModified != file.lastModified()
+
+      override def buildCache(): CachedInformation = {
+        logger.info(s"Updated file cache for ${file.getName}...")
+        val input = new FileInputStream(file)
+        try {
+          val parser = new HTMLParser(input)
+          val tags = parser.parse()
+          var byId = Map.empty[String, OpenTag]
+          var byClass = Map.empty[String, Set[OpenTag]]
+          var byTag = Map.empty[String, Set[OpenTag]]
+          tags.foreach { tag =>
+            if (tag.attributes.contains("id")) {
+              byId += tag.attributes("id") -> tag
+            }
+            tag.attributes.getOrElse("class", "").split(" ").foreach { className =>
+              val cn = className.trim
+              if (cn.nonEmpty) {
+                var classTags = byClass.getOrElse(cn, Set.empty[OpenTag])
+                classTags += tag
+                byClass += cn -> classTags
+              }
+            }
+            var tagsByName = byTag.getOrElse(tag.tagName, Set.empty[OpenTag])
+            tagsByName += tag
+            byTag += tag.tagName -> tagsByName
           }
+          lastModified = file.lastModified()
+          CachedInformation(byId, byClass, byTag)
+        } finally {
+          input.close()
         }
-        var tagsByName = byTag.getOrElse(tag.tagName, Set.empty[OpenTag])
-        tagsByName += tag
-        byTag += tag.tagName -> tagsByName
       }
-      new StreamableHTML(file, file.lastModified() != lastModified, byId, byClass, byTag)
-    } finally {
-      input.close()
     }
+    new StreamableHTML(file, cacheBuilder)
   }
 }
 

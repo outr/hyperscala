@@ -21,6 +21,15 @@ class FunctionalResourceManager extends ResourceManager {
   private var listeners = Set.empty[ResourceChangeListener]
   private var mappings = Set.empty[ResourceMapping]
 
+  private def defaultFileConversion(directory: File) = (path: String) => {
+    val f = new File(directory, path)
+    if (f.exists()) {
+      Some(f)
+    } else {
+      None
+    }
+  }
+
   override def removeResourceChangeListener(listener: ResourceChangeListener): Unit = synchronized {
     listeners -= listener
   }
@@ -35,9 +44,17 @@ class FunctionalResourceManager extends ResourceManager {
     m.lookup(path)
   }.headOption.orNull
 
-  def fileMapping(directory: File, pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
+  def fileMapping(directory: File)(pathConversion: String => Option[File] = defaultFileConversion(directory)): Unit = {
     this += new PathResourceMapping {
-      override def base: String = directory.getAbsolutePath
+      override def base: String = directory.getCanonicalPath
+
+      override def lookup(path: String): Option[Resource] = pathConversion(path).map(f => new FileResource(f, fileResourceManager, f.getCanonicalPath.substring(base.length)))
+    }
+  }
+
+  def filePathMapping(directory: File)(pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
+    this += new PathResourceMapping {
+      override def base: String = directory.getCanonicalPath
 
       override def lookup(path: String): Option[Resource] = pathConversion(path).flatMap { updated =>
         val file = new File(directory, updated)
@@ -50,7 +67,7 @@ class FunctionalResourceManager extends ResourceManager {
     }
   }
 
-  def pathMapping(path: Path, pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
+  def pathMapping(path: Path)(pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
     this += new PathResourceMapping {
       override def base: String = path.toAbsolutePath.toString
 
@@ -65,7 +82,7 @@ class FunctionalResourceManager extends ResourceManager {
     }
   }
 
-  def classPathMapping(path: String, pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
+  def classPathMapping(path: String)(pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
     this += new ClassPathResourceMapping {
       override def base: String = path match {
         case _ if path.endsWith("/") => path.substring(0, path.length - 1)
