@@ -55,8 +55,10 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
 
     updateScreen()
 
-    val s = screen.get.get.asInstanceOf[ClientScreen]
-    s.load(None)
+    screen.get match {
+      case Some(s) => s.asInstanceOf[ClientScreen].load(None)
+      case None => logger.error(s"No screen found for ${document.location.href}.")
+    }
 
     // Register listener for Screen content
     app.screenContentResponse.attach { evt =>
@@ -131,7 +133,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
               case None => // Screen doesn't affect history
             }
             if (!s.loaded) {
-              app.screenContentRequest := ScreenContentRequest(s.screenName)
+              app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href.substring(document.location.href.indexOf('/', 8)))
             }
             updateState()
             s.show()
@@ -148,7 +150,6 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   private def updateState(): Unit = if (document.location.pathname != previousState) {
     logger.info(s"Updating state from ${previousState} to ${document.location.pathname}")
     previousState = document.location.pathname
-    val s = updateScreen().get
     app.pathChanged := PathChanged(document.location.pathname)
   }
 

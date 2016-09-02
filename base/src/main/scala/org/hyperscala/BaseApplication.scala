@@ -12,4 +12,6 @@ trait BaseApplication {
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit
 
   protected def register[T]: Channel[T] = macro BaseMacros.pickler[T]
+
+  def encodeURIComponent(value: String): String = macro BaseMacros.encodeURIComponent
 }

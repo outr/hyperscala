@@ -58,6 +58,9 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       }
     }
     app.screenContentRequest.attach { evt =>
+      if (!connection.path.get.contains(evt.path)) {
+        connection.path := Option(evt.path)
+      }
       val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}."))
       val serverScreen = screen.asInstanceOf[ServerScreen]
       val title = serverScreen.title()

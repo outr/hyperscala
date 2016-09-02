@@ -9,7 +9,8 @@ trait Connection {
 
   def init(): Unit
 
-  val screen: Sub[Option[BaseScreen]] = Sub[Option[BaseScreen]](None)
+  val path: Sub[Option[String]] = Sub(None)
+  val screen: Sub[Option[BaseScreen]] = Sub(None)
 
   def replaceWith(screen: BaseScreen): Unit = {
     replace = true

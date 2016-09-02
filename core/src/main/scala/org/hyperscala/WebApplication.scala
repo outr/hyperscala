@@ -34,7 +34,24 @@ abstract class WebApplication extends BaseApplication {
     }
   }
 
-  def init(): Unit = manager.init()
+  def init(): Unit = {
+    pathChanged.attach { evt =>
+      connection.path := Option(evt.path)
+    }
+    manager.init()
+  }
 
   def byName(screenName: String): Option[Screen] = screensByName.get(screenName)
+
+  def createPath(path: String, args: Map[String, String] = Map.empty): String = {
+    val b = new StringBuilder(path)
+    if (args.nonEmpty) {
+      b.append('?')
+      val params = args.map {
+        case (key, value) => s"$key=${encodeURIComponent(value)}"
+      }.mkString("&")
+      b.append(params)
+    }
+    b.toString()
+  }
 }

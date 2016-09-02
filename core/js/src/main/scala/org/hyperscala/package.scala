@@ -5,6 +5,8 @@ import org.scalajs.dom._
 import org.scalajs.dom.ext._
 import org.scalajs.dom.raw.HTMLElement
 
+import scala.scalajs.js.URIUtils
+
 package object hyperscala extends Logging {
   def byTag[T <: HTMLElement](tagName: String): Vector[T] = {
     document.getElementsByTagName(tagName).toVector.map(_.asInstanceOf[T])
@@ -19,6 +21,20 @@ package object hyperscala extends Logging {
       val message = s"Unable to find element by id '$id'."
       logger.error(message)
       throw new RuntimeException(message)
+    }
+  }
+
+  def params: Map[String, String] = {
+    val href = URIUtils.decodeURI(document.location.href)
+    val splitPoint = href.indexOf('?')
+    if (splitPoint == -1) {
+      Map.empty
+    } else {
+      val query = href.substring(splitPoint + 1)
+      query.split('&').map(param => param.trim.splitAt(param.indexOf('='))).collect {
+        case (key, value) if key.nonEmpty => key -> value.substring(1)
+        case (key, value) if value.nonEmpty => "query" -> value
+      }.toMap
     }
   }
 
