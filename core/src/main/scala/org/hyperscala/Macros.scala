@@ -78,7 +78,6 @@ object Macros {
               override def init(): Unit = {}
               override def activate(): Unit = {}
               override def deactivate(): Unit = {}
-              override def path: Option[String] = None
 
               override def toString(): String = $screenTypeString
            }
@@ -95,6 +94,8 @@ object Macros {
          new $screenType {
           override def screenName: String = $typeString
           override def app = webApp
+
+          override def establishConnection: Boolean = false
 
           override def toString(): String = $screenTypeString
          }

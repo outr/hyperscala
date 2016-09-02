@@ -11,6 +11,8 @@ import org.hyperscala.stream.{ByTag, Delta, HTMLParser}
 trait ServerScreen extends Screen with ExplicitHandler with Logging {
   lazy val streamable = HTMLParser(template)
 
+  protected def establishConnection: Boolean = true
+
   def activate(connection: ServerConnection): Unit = {}
   def deactivate(connection: ServerConnection): Unit = {}
 
@@ -29,7 +31,16 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
     } else {
       None
     }
-    streamable.stream(deltas(request), selector)
+    val d = request.exchange match {
+      case Left(exchange) if establishConnection => {
+        val path = exchange.completePath
+        val connection = app.manager.asInstanceOf[ServerApplicationManager].createConnection(path)
+        val input = s"""<input id="hyperscala-connection-id" type="hidden" value="${connection.id}"/>"""
+        deltas(request) ::: List(Delta.InsertFirstChild(ByTag("body"), input))
+      }
+      case _ => deltas(request)
+    }
+    streamable.stream(d, selector)
   }
 
   override def handleRequest(exchange: HttpServerExchange): Unit = {

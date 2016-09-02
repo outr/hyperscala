@@ -9,10 +9,6 @@ trait ClientScreen extends Screen {
 
   val title: Sub[Option[String]] = Sub(None)
 
-  type Path = String
-
-  def path: Option[Path]
-
   final def show(): Unit = if (loaded) {
     title.get match {
       case Some(t) => document.title = t
@@ -37,13 +33,13 @@ trait ClientScreen extends Screen {
     }
     _loaded = true
     title.attach {
-      case Some(t) => if (app.connection.screen.get.contains(this)) {
+      case Some(t) => if (app.connection.screen.get == this) {
         document.title = t
       }
       case None => // No title
     }
     init()
-    if (app.connection.screen.get.contains(this)) {
+    if (app.connection.screen.get == this) {
       activate()
     } else {
       deactivate()

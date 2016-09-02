@@ -15,7 +15,8 @@ class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
 }
 
 class ClientConnection(val app: WebApplication) extends Connection with Logging {
-  private lazy val url = s"ws://${window.location.host}${app.communicationPath}"
+  private lazy val connectionId = byId[html.Input]("hyperscala-connection-id").value
+  private lazy val url = s"ws://${window.location.host}${app.communicationPath}?$connectionId"
   private lazy val webSocket = new WebSocket(url)
 
   private var connected = false
@@ -23,7 +24,10 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
 
   private var popping = false
 
+  override def initialPath: String = completePath
+
   override def init(): Unit = {
+    logger.info(s"Connection ID: $connectionId")
     webSocket.onopen = (evt: Event) => {
       logger.info(s"WebSocket connection open")
       connected = true
@@ -55,10 +59,8 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
 
     updateScreen()
 
-    screen.get match {
-      case Some(s) => s.asInstanceOf[ClientScreen].load(None)
-      case None => logger.error(s"No screen found for ${document.location.href}.")
-    }
+    // Loading the current screen
+    screen.get.asInstanceOf[ClientScreen].load(None)
 
     // Register listener for Screen content
     app.screenContentResponse.attach { evt =>
@@ -93,55 +95,50 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
 
   private var previous: Option[BaseScreen] = None
 
-  def updateScreen(): Option[ClientScreen] = {
+  def updateScreen(): ClientScreen = {
     val path = document.location.pathname
-    val s = app.screens.find(_.isPathMatch(path)).asInstanceOf[Option[ClientScreen]]
+    val s = app.byPath(path)
     if (screen.get != s) {
       screen := s
     }
-    s
+    s.asInstanceOf[ClientScreen]
   }
 
   private var firstScreen = true
 
-  private def screenChanged(screenOption: Option[BaseScreen]): Unit = {
-    if (screenOption != previous) {
+  private def screenChanged(newScreen: BaseScreen): Unit = {
+    if (!previous.contains(newScreen)) {
       previous match {
         case Some(scrn) => scrn match {
           case s: ClientScreen => s.deactivate()
         }
         case None => // No previous screen defined
       }
-      screenOption match {
-        case Some(scrn) => scrn match {
-          case s: ClientScreen => {
-            logger.info(s"Changing screen to: $s")
-            s.path match {
-              case Some(path) => {
-                if (firstScreen) {
-                  firstScreen = false
-                } else if (!popping) {
-                  if (replace) {
-                    logger.info(s"Replacing state: $path")
-                    window.history.replaceState(path, path, path)
-                  } else {
-                    logger.info(s"Pushing state: $path")
-                    window.history.pushState(path, path, path)
-                  }
-                }
-              }
-              case None => // Screen doesn't affect history
-            }
-            if (!s.loaded) {
-              app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href.substring(document.location.href.indexOf('/', 8)))
-            }
-            updateState()
-            s.show()
-          }
-        }
-        case None => // Nothing to do
+      val s = newScreen.asInstanceOf[ClientScreen]
+      logger.info(s"Changing screen to: $s")
+      // TODO: allow the screen to change the URL and push state
+//      s.path match {
+//        case Some(path) => {
+//          if (firstScreen) {
+//            firstScreen = false
+//          } else if (!popping) {
+//            if (replace) {
+//              logger.info(s"Replacing state: $path")
+//              window.history.replaceState(path, path, path)
+//            } else {
+//              logger.info(s"Pushing state: $path")
+//              window.history.pushState(path, path, path)
+//            }
+//          }
+//        }
+//        case None => // Screen doesn't affect history
+//      }
+      if (!s.loaded) {
+        app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href.substring(document.location.href.indexOf('/', 8)))
       }
-      previous = screenOption
+      updateState()
+      s.show()
+      previous = Some(s)
     }
   }
 

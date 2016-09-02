@@ -24,6 +24,8 @@ package object hyperscala extends Logging {
     }
   }
 
+  def completePath: String = document.location.href.substring(document.location.href.indexOf('/', 8))
+
   def params: Map[String, String] = {
     val href = URIUtils.decodeURI(document.location.href)
     val splitPoint = href.indexOf('?')

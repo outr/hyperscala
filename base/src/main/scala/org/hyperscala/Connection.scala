@@ -7,15 +7,16 @@ trait Connection {
 
   def app: BaseApplication
 
-  def init(): Unit
+  def initialPath: String
+  val path: Sub[String] = Sub(initialPath)
+  val screen: Sub[BaseScreen] = Sub(app.byPath(initialPath))
 
-  val path: Sub[Option[String]] = Sub(None)
-  val screen: Sub[Option[BaseScreen]] = Sub(None)
+  def init(): Unit
 
   def replaceWith(screen: BaseScreen): Unit = {
     replace = true
     try {
-      this.screen := Some(screen)
+      this.screen := screen
     } finally {
       replace = false
     }

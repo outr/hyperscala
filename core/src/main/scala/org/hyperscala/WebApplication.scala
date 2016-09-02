@@ -6,7 +6,7 @@ import scala.language.experimental.macros
 
 abstract class WebApplication extends BaseApplication {
   override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
-  override protected[hyperscala] var _screens = Vector.empty[BaseScreen]
+  private var _screens = Vector.empty[BaseScreen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
 
   lazy val manager: ApplicationManager = createApplicationManager()
@@ -23,6 +23,10 @@ abstract class WebApplication extends BaseApplication {
   def server[S <: Screen]: S = macro Macros.serverScreen[S]
   def communicationPath: String = "/communication"
 
+  override protected[hyperscala] def add(screen: BaseScreen): Unit = synchronized {
+    _screens = (_screens :+ screen).sortBy(_.priority)
+  }
+
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit = synchronized {
     val position = picklers.length
     picklers = picklers :+ pickler
@@ -36,9 +40,13 @@ abstract class WebApplication extends BaseApplication {
 
   def init(): Unit = {
     pathChanged.attach { evt =>
-      connection.path := Option(evt.path)
+      connection.path := evt.path
     }
     manager.init()
+  }
+
+  def byPath(path: String): Screen = {
+    screens.find(_.isPathMatch(path)).getOrElse(throw new RuntimeException(s"No screen found for the specified path: $path."))
   }
 
   def byName(screenName: String): Option[Screen] = screensByName.get(screenName)

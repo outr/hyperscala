@@ -4,10 +4,28 @@ import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage, StreamSourceFrameChannel, WebSocketChannel, WebSockets}
 import io.undertow.websockets.spi.WebSocketHttpExchange
+import org.powerscala.Unique
 
 class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
   private val currentConnection = new ThreadLocal[Option[Connection]] {
     override def initialValue(): Option[Connection] = None
+  }
+  private var unboundConnections = Map.empty[String, ServerConnection]
+
+  def createConnection(path: String): ServerConnection = synchronized {
+    val c = new ServerConnection(this, path)
+    unboundConnections += c.id -> c
+    c
+  }
+
+  def bindConnection(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = synchronized {
+    val id = exchange.getQueryString
+    val c = unboundConnections.getOrElse(id, throw new RuntimeException(s"No unbound connection found for $id."))
+    channel.getReceiveSetter.set(c)
+    channel.resumeReceives()
+    unboundConnections -= id
+    _connections += c
+    c.init()
   }
 
   private[hyperscala] var _connections = Set.empty[Connection]
@@ -17,12 +35,8 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
 
   override def onConnect(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = {
     logger.info("WebSocket connected!")
-    val connection = new ServerConnection(this, exchange, channel)
-    synchronized {
-      _connections += connection
-    }
-    channel.getReceiveSetter.set(connection)
-    channel.resumeReceives()
+
+    bindConnection(exchange, channel)
   }
 
   def using[R](connection: Connection)(f: => R): R = {
@@ -39,27 +53,19 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   override def init(): Unit = {
     app.pathChanged.attach { evt =>
       val previousScreen = connection.screen.get
-      val newScreen = app.screens.find(_.isPathMatch(evt.path))
+      val newScreen = app.byPath(evt.path)
       logger.debug(s"Path Changed: $evt, previous: $previousScreen, new: $newScreen")
       if (previousScreen != newScreen) {
-        previousScreen match {
-          case Some(previous) => previous.asInstanceOf[ServerScreen].deactivate(connection)
-          case None => // Nothing previous set
-        }
-        newScreen match {
-          case Some(scrn) => {
-            val serverScreen = scrn.asInstanceOf[ServerScreen]
-            serverScreen.activate(connection)
-            logger.debug(s"Activated: $serverScreen")
-          }
-          case None => // Nothing new set
-        }
+        previousScreen.asInstanceOf[ServerScreen].deactivate(connection)
+        val serverScreen = newScreen.asInstanceOf[ServerScreen]
+        serverScreen.activate(connection)
+        logger.debug(s"Activated: $serverScreen")
         connection.screen := newScreen
       }
     }
     app.screenContentRequest.attach { evt =>
-      if (!connection.path.get.contains(evt.path)) {
-        connection.path := Option(evt.path)
+      if (connection.path.get != evt.path) {
+        connection.path := evt.path
       }
       val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}."))
       val serverScreen = screen.asInstanceOf[ServerScreen]
@@ -70,17 +76,39 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   }
 }
 
-class ServerConnection(manager: ServerApplicationManager, val exchange: WebSocketHttpExchange, channel: WebSocketChannel) extends AbstractReceiveListener with Connection with Logging {
-  override def app: WebApplication = manager.app
-  val serverSession = Server.session.undertowSession
+class ServerConnection(manager: ServerApplicationManager, val initialPath: String) extends AbstractReceiveListener with Connection with Logging {
+  val id: String = Unique()
+  val created: Long = System.currentTimeMillis()
+  var lastActive: Long = System.currentTimeMillis()
 
-  override def init(): Unit = {
-    manager.synchronized {
-      manager._connections += this
+  var exchange: WebSocketHttpExchange = _
+  private val serverSession = Server.session.undertowSession
+  private var backlog = List.empty[String]
+  private var channel: WebSocketChannel = _
+
+  override def app: BaseApplication = manager.app
+
+  override def init(): Unit = {}
+
+  def bind(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = {
+    this.exchange = exchange
+    this.channel = channel
+
+    backlog.reverse.foreach(send)
+    backlog = Nil
+  }
+
+  override def send(id: Int, json: String): Unit = synchronized {
+    val message = s"$id:$json"
+    Option(channel) match {
+      case Some(c) => send(message)
+      case None => backlog = message :: backlog
     }
   }
 
-  override def send(id: Int, json: String): Unit = WebSockets.sendText(s"$id:$json", channel, None.orNull)
+  def send(message: String): Unit = synchronized {
+    WebSockets.sendText(message, channel, None.orNull)
+  }
 
   override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = Server.withServerSession(serverSession) {
     val data = message.getData

@@ -65,6 +65,7 @@ object HyperscalaBuild extends Build {
       libraryDependencies ++= Seq(
         "com.outr.scribe" %% "scribe-slf4j" % Dependencies.scribe,
         "io.undertow" % "undertow-core" % Dependencies.undertow,
+        "org.powerscala" %% "powerscala-core" % Dependencies.powerscala,
         "org.powerscala" %% "powerscala-io" % Dependencies.powerscala
       ),
       coverageEnabled in Test := true
