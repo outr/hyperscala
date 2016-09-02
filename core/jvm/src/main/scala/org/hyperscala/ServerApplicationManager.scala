@@ -15,6 +15,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   def createConnection(path: String): ServerConnection = synchronized {
     val c = new ServerConnection(this, path)
     unboundConnections += c.id -> c
+    c.init()
     c
   }
 
@@ -25,7 +26,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
     channel.resumeReceives()
     unboundConnections -= id
     _connections += c
-    c.init()
+    c.bind(exchange, channel)
   }
 
   private[hyperscala] var _connections = Set.empty[Connection]

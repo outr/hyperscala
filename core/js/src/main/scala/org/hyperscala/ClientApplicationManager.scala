@@ -27,7 +27,6 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   override def initialPath: String = completePath
 
   override def init(): Unit = {
-    logger.info(s"Connection ID: $connectionId")
     webSocket.onopen = (evt: Event) => {
       logger.info(s"WebSocket connection open")
       connected = true
@@ -107,6 +106,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   private var firstScreen = true
 
   private def screenChanged(newScreen: BaseScreen): Unit = {
+    logger.info(s"screenChanged: $newScreen from $previous")
     if (!previous.contains(newScreen)) {
       previous match {
         case Some(scrn) => scrn match {
