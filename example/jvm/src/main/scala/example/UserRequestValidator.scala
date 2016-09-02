@@ -10,7 +10,7 @@ trait UserRequestValidator extends RequestValidator {
       ValidationResult.Continue
     } else {
       logger.info(s"Redirecting to login page.")
-      ValidationResult.Redirect(ExampleApplication.login.path.get)
+      ValidationResult.Redirect(ExampleApplication.login.path)
     }
   }
 }

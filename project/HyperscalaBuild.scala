@@ -157,7 +157,7 @@ object Details {
 }
 
 object Dependencies {
-  val scribe = "1.2.3"
+  val scribe = "1.2.4"
   val undertow = "1.4.0.CR3"
   val uPickle = "0.4.1"
   val scalaTest = "3.0.0-M16-SNAP4"

@@ -1,10 +1,11 @@
 package org.hyperscala
 
+import com.outr.scribe.Logging
 import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
 
-abstract class WebApplication extends BaseApplication {
+abstract class WebApplication extends BaseApplication with Logging {
   override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   private var _screens = Vector.empty[BaseScreen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
@@ -38,7 +39,7 @@ abstract class WebApplication extends BaseApplication {
     }
   }
 
-  def init(): Unit = {
+  def init(): Unit = errorSupport {
     pathChanged.attach { evt =>
       connection.path := evt.path
     }
@@ -62,4 +63,14 @@ abstract class WebApplication extends BaseApplication {
     }
     b.toString()
   }
+
+  def errorSupport[R](f: => R): R = try {
+    f
+  } catch {
+    case t: Throwable => {
+      error(t)
+      throw t
+    }
+  }
+  def error(t: Throwable): Unit = logger.error(t)
 }

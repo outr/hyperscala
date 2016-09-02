@@ -75,8 +75,8 @@ object Macros {
               override def screenName: String = $typeString
               override def app = webApp
 
-              override def init(): Unit = {}
-              override def activate(): Unit = {}
+              override def init(isPage: Boolean): Unit = {}
+              override def activate(): Option[org.hyperscala.PathChange] = None
               override def deactivate(): Unit = {}
 
               override def toString(): String = $screenTypeString

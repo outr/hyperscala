@@ -52,7 +52,11 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
       } else {
         val id = messageData.substring(0, index).toInt
         val json = messageData.substring(index + 1)
-        receive(id, json)
+        try {
+          receive(id, json)
+        } catch {
+          case t: Throwable => app.error(t)
+        }
       }
     }
 
@@ -103,14 +107,12 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     s.asInstanceOf[ClientScreen]
   }
 
-  private var firstScreen = true
-
   private def screenChanged(newScreen: BaseScreen): Unit = {
     logger.info(s"screenChanged: $newScreen from $previous")
     if (!previous.contains(newScreen)) {
       previous match {
         case Some(scrn) => scrn match {
-          case s: ClientScreen => s.deactivate()
+          case s: ClientScreen => s.doDeactivate()
         }
         case None => // No previous screen defined
       }

@@ -10,7 +10,8 @@ trait ClientLoginScreen extends LoginScreen with Logging with SimpleClientScreen
   def username = byId[html.Input]("username")
   def password = byId[html.Input]("password")
 
-  override def init(): Unit = {
+  override def init(isPage: Boolean): Unit = {
+    logger.info(s"init login screen. isPage: $isPage")
     // Change screen upon successful login
     response.attach { r =>
       r.errorMessage match {

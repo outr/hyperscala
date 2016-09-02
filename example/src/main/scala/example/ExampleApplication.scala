@@ -13,11 +13,11 @@ trait LoginScreen extends SimpleScreen {
   val authenticate: Channel[Authentication] = register[Authentication]
   val response: Channel[AuthResponse] = register[AuthResponse]
 
-  override def path: Some[String] = Some("/login.html")
+  override val path: String = "/login.html"
 }
 
 trait DashboardScreen extends SimpleScreen {
-  override def path: Some[String] = Some("/dashboard.html")
+  override val path: String = "/dashboard.html"
 }
 
 trait ErrorScreen extends Screen {

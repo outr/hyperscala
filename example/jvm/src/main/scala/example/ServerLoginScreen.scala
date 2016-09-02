@@ -32,7 +32,7 @@ trait ServerLoginScreen extends LoginScreen with ServerScreen with PartialSuppor
       ValidationResult.Continue
     } else {
       logger.info(s"User is already logged in (${ExampleServer.session.username.get.get}), redirecting to dashboard...")
-      ValidationResult.Redirect(ExampleApplication.dashboard.path.get)
+      ValidationResult.Redirect(ExampleApplication.dashboard.path)
     }
   }
 }

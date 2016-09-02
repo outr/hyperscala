@@ -3,7 +3,7 @@ package org.hyperscala
 import pl.metastack.metarx.Sub
 
 trait Connection {
-  private[hyperscala] var replace = false
+  protected var replace = false
 
   def app: BaseApplication
 
@@ -12,6 +12,15 @@ trait Connection {
   val screen: Sub[BaseScreen] = Sub(app.byPath(initialPath))
 
   def init(): Unit
+
+  def replaceWith(path: String): Unit = {
+    replace = true
+    try {
+      this.path := path
+    } finally {
+      replace = false
+    }
+  }
 
   def replaceWith(screen: BaseScreen): Unit = {
     replace = true
