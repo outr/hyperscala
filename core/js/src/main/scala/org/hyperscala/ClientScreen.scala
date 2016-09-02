@@ -71,10 +71,8 @@ trait ClientScreen extends Screen {
         if (pathChange.path != currentPath || pathChange.force) {
           if (pathChange.replace) {
             app.connection.asInstanceOf[ClientConnection].replacePath(pathChange.path)
-//            app.connection.replaceWith(pathChange.path)
           } else {
             app.connection.asInstanceOf[ClientConnection].pushPath(pathChange.path)
-//            app.connection.path := pathChange.path
           }
         }
       }
