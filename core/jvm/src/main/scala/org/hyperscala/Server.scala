@@ -112,7 +112,7 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
     }
   }
 
-  protected def error(t: Throwable): Unit = logger.error(Platform.throwable2String(t))
+  protected def error(t: Throwable): Unit = logger.error(t)
   protected def errorSupport[R](f: => R): R = try {
     f
   } catch {

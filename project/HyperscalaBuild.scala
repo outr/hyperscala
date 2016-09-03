@@ -1,7 +1,6 @@
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import sbt.Keys._
 import sbt._
-import scoverage.ScoverageSbtPlugin.autoImport._
 
 object HyperscalaBuild extends Build {
   lazy val root = project.in(file("."))
@@ -26,7 +25,6 @@ object HyperscalaBuild extends Build {
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % Dependencies.scalaJSDOM
       ),
-      coverageEnabled := false,
       scalaJSStage in Global := FastOptStage
     )
     .jvmSettings(
@@ -34,8 +32,7 @@ object HyperscalaBuild extends Build {
         "com.outr.scribe" %% "scribe-slf4j" % Dependencies.scribe,
         "io.undertow" % "undertow-core" % Dependencies.undertow,
         "org.powerscala" %% "powerscala-io" % Dependencies.powerscala
-      ),
-      coverageEnabled in Test := true
+      )
     )
   lazy val baseJS = base.js
   lazy val baseJVM = base.jvm
@@ -58,7 +55,6 @@ object HyperscalaBuild extends Build {
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % Dependencies.scalaJSDOM
       ),
-      coverageEnabled := false,
       scalaJSStage in Global := FastOptStage
     )
     .jvmSettings(
@@ -67,8 +63,7 @@ object HyperscalaBuild extends Build {
         "io.undertow" % "undertow-core" % Dependencies.undertow,
         "org.powerscala" %% "powerscala-core" % Dependencies.powerscala,
         "org.powerscala" %% "powerscala-io" % Dependencies.powerscala
-      ),
-      coverageEnabled in Test := true
+      )
     )
   lazy val coreJS = core.js.dependsOn(baseJS)
   lazy val coreJVM = core.jvm.dependsOn(baseJVM)
@@ -81,13 +76,9 @@ object HyperscalaBuild extends Build {
       apiMappings += (scalaInstance.value.libraryJar -> url(s"http://www.scala-lang.org/api/${scalaVersion.value}/"))
     )
     .jsSettings(
-      coverageEnabled := false,
       scalaJSStage in Global := FastOptStage,
       crossTarget in fastOptJS := baseDirectory.value / ".." / "jvm" / "src" / "main" / "web" / "app",
       crossTarget in fullOptJS := baseDirectory.value / ".." / "jvm" / "src" / "main" / "web" / "app"
-    )
-    .jvmSettings(
-      coverageEnabled in Test := true
     )
   lazy val exampleJS = example.js.dependsOn(coreJS)
   lazy val exampleJVM = example.jvm.dependsOn(coreJVM)
@@ -157,7 +148,7 @@ object Details {
 }
 
 object Dependencies {
-  val scribe = "1.2.4"
+  val scribe = "1.2.5"
   val undertow = "1.4.0.CR3"
   val uPickle = "0.4.1"
   val scalaTest = "3.0.0-M16-SNAP4"
