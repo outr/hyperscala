@@ -1,6 +1,5 @@
 package org.hyperscala
 
-import org.hyperscala.manager.ApplicationManager
 import pl.metastack.metarx.Channel
 
 import scala.annotation.compileTimeOnly
