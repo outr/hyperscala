@@ -37,7 +37,7 @@ object BaseMacros {
     )
   }
 
-  def applicationManager(c: blackbox.Context)(): c.Expr[ApplicationManager] = {
+  def applicationManager(c: blackbox.Context): c.Expr[ApplicationManager] = {
     import c.universe._
 
     val isJS = try {
