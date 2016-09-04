@@ -156,7 +156,7 @@ object Server extends Logging {
     val server = new Server(host, port, sessionDomain)
 
     // Create WebSocket communication handler
-    val webSocketCallback = app.manager.asInstanceOf[WebSocketConnectionCallback]
+    val webSocketCallback = app.appManager.asInstanceOf[WebSocketConnectionCallback]
     server.register(HttpPathHandler(Handlers.websocket(webSocketCallback)), app.communicationPath)
 
     // Register screens

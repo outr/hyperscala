@@ -6,6 +6,7 @@ import com.outr.scribe.Logging
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.Headers
 import io.undertow.websockets.spi.WebSocketHttpExchange
+import org.hyperscala.manager.{ServerApplicationManager, ServerConnection}
 import org.hyperscala.stream.{ByTag, Delta, HTMLParser}
 
 trait ServerScreen extends Screen with ExplicitHandler with Logging {
@@ -34,7 +35,7 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
     val d = request.exchange match {
       case Left(exchange) if establishConnection => {
         val path = exchange.completePath
-        val connection = app.manager.asInstanceOf[ServerApplicationManager].createConnection(path)
+        val connection = app.appManager.asInstanceOf[ServerApplicationManager].createConnection(path)
         val input = s"""<input id="hyperscala-connection-id" type="hidden" value="${connection.id}"/>"""
         deltas(request) ::: List(Delta.InsertFirstChild(ByTag("body"), input))
       }

@@ -1,5 +1,6 @@
 package org.hyperscala
 
+import org.hyperscala.manager.ClientConnection
 import org.scalajs.dom._
 import pl.metastack.metarx.{Channel, Sub}
 

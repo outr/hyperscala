@@ -1,6 +1,7 @@
-package org.hyperscala
+package org.hyperscala.manager
 
 import com.outr.scribe.Logging
+import org.hyperscala.{BaseScreen, ClientScreen, PathChanged, ScreenContentRequest, _}
 import org.scalajs.dom._
 import org.scalajs.dom.raw.WebSocket
 

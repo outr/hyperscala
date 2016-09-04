@@ -1,5 +1,6 @@
 package org.hyperscala
 
+import org.hyperscala.manager.ApplicationManager
 import pl.metastack.metarx.Channel
 
 import scala.annotation.compileTimeOnly
@@ -49,9 +50,9 @@ object BaseMacros {
 
     val app = q"${c.prefix.tree}"
     val manager = if (isJS) {
-      q"""org.hyperscala.ClientApplicationManager($app)"""
+      q"""org.hyperscala.manager.ClientApplicationManager($app)"""
     } else {
-      q"""org.hyperscala.ServerApplicationManager($app)"""
+      q"""org.hyperscala.manager.ServerApplicationManager($app)"""
     }
 
     c.Expr[ApplicationManager](manager)

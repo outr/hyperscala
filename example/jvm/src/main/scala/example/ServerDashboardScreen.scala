@@ -2,8 +2,9 @@ package example
 
 import java.io.File
 
+import org.hyperscala.manager.ServerConnection
 import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
-import org.hyperscala.{PartialSupport, Request, ServerConnection, ServerScreen}
+import org.hyperscala.{PartialSupport, Request, ServerScreen}
 
 trait ServerDashboardScreen extends DashboardScreen with ServerScreen with PartialSupport with UserRequestValidator {
   override def template: File = new File("src/main/web/dashboard.html")

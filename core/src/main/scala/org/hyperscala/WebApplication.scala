@@ -29,7 +29,7 @@ abstract class WebApplication extends BaseApplication with Logging {
 
   def screens: Vector[Screen] = _screens.asInstanceOf[Vector[Screen]]
 
-  def connection: Connection = manager.connection
+  def connection: Connection = appManager.connection
 
   def create[S <: Screen]: S = macro Macros.screen[S]
   def server[S <: Screen]: S = macro Macros.serverScreen[S]
@@ -45,7 +45,7 @@ abstract class WebApplication extends BaseApplication with Logging {
     pickler.channel.attach { t =>
       if (!pickler.isReceiving(t)) {
         val json = pickler.write(t)
-        manager.connection.send(position, json)
+        appManager.connection.send(position, json)
       }
     }
   }
@@ -54,7 +54,7 @@ abstract class WebApplication extends BaseApplication with Logging {
     pathChanged.attach { evt =>
       connection.path := evt.path
     }
-    manager.init()
+    appManager.init()
   }
 
   def byPath(path: String): Screen = {

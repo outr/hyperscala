@@ -1,9 +1,10 @@
-package org.hyperscala
+package org.hyperscala.manager
 
 import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
-import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage, StreamSourceFrameChannel, WebSocketChannel, WebSockets}
+import io.undertow.websockets.core._
 import io.undertow.websockets.spi.WebSocketHttpExchange
+import org.hyperscala.{BaseApplication, Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, WebApplication}
 import org.powerscala.Unique
 
 class ServerApplicationManager private(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {

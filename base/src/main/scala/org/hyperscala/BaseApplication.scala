@@ -1,5 +1,6 @@
 package org.hyperscala
 
+import org.hyperscala.manager.ApplicationManager
 import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
@@ -7,7 +8,7 @@ import scala.language.experimental.macros
 trait BaseApplication {
   protected[hyperscala] var picklers: Vector[Pickler[_]]
 
-  final def manager: ApplicationManager = macro BaseMacros.applicationManager
+  final def appManager: ApplicationManager = macro BaseMacros.applicationManager
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit
   protected[hyperscala] def add(screen: BaseScreen): Unit
 
