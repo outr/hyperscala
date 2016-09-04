@@ -123,47 +123,8 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
   }
 }
 
-trait Store {
-  def apply[T](key: String): T
-  def get[T](key: String): Option[T]
-  def update[T](key: String, value: T): Unit
-  def remove(key: String): Unit
-
-  def getOrElse[T](key: String, default: => T): T = get[T](key).getOrElse(default)
-  def getOrSet[T](key: String, default: => T): T = synchronized {
-    get[T](key) match {
-      case Some(value) => value
-      case None => {
-        val value: T = default
-        update(key, value)
-        value
-      }
-    }
-  }
-}
-
 object Server extends Logging {
-  object request extends Store {
-    private val threadLocal = new ThreadLocal[Map[String, Any]]
-
-    def inScope: Boolean = Option(threadLocal.get()).isDefined
-    def map: Map[String, Any] = Option(threadLocal.get()).getOrElse(throw new RuntimeException("Not in a request scope."))
-    override def apply[T](key: String): T = map(key).asInstanceOf[T]
-    override def get[T](key: String): Option[T] = map.get(key).asInstanceOf[Option[T]]
-    override def update[T](key: String, value: T): Unit = threadLocal.set(map + (key -> value))
-    override def remove(key: String): Unit = threadLocal.set(map - key)
-
-    def clear(): Unit = threadLocal.remove()
-
-    def scoped[R](f: => R): R = {
-      threadLocal.set(Map.empty[String, Any])
-      try {
-        f
-      } finally {
-        clear()
-      }
-    }
-  }
+  object request extends ThreadLocalStore
   object session extends Store {
     def undertowSession: UndertowSession = request[UndertowSession]("serverSession")
     override def apply[T](key: String): T = get[T](key).getOrElse(throw new NullPointerException(s"$key is not defined in the session."))
@@ -176,7 +137,7 @@ object Server extends Logging {
 
   def wrap(wrapper: (() => Unit) => Unit): Unit = this.wrapper = wrapper
 
-  def withServerSession(session: UndertowSession)(f: => Unit): Unit = request.scoped {
+  def withServerSession(session: UndertowSession)(f: => Unit): Unit = request.scoped(Map.empty) {
     request("serverSession") = session
     wrapper(() => f)
   }

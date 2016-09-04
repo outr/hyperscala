@@ -5,6 +5,19 @@ import pl.metastack.metarx.Channel
 import scala.language.experimental.macros
 
 trait BaseApplication {
+  object global extends MapStore {
+    private var _map: Map[String, Any] = Map.empty
+    override def map: Map[String, Any] = _map
+
+    override def update[T](key: String, value: T): Unit = synchronized {
+      _map += key -> value
+    }
+
+    override def remove(key: String): Unit = synchronized {
+      _map -= key
+    }
+  }
+
   protected[hyperscala] var picklers: Vector[Pickler[_]]
 
   protected def createApplicationManager(): ApplicationManager = macro BaseMacros.applicationManager
