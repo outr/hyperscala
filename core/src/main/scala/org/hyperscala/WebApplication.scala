@@ -6,6 +6,19 @@ import pl.metastack.metarx.Channel
 import scala.language.experimental.macros
 
 abstract class WebApplication extends BaseApplication with Logging {
+  object global extends MapStore {
+    private var _map: Map[String, Any] = Map.empty
+    override def map: Map[String, Any] = _map
+
+    override def update[T](key: String, value: T): Unit = synchronized {
+      _map += key -> value
+    }
+
+    override def remove(key: String): Unit = synchronized {
+      _map -= key
+    }
+  }
+
   override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   private var _screens = Vector.empty[BaseScreen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
