@@ -5,7 +5,7 @@ import org.hyperscala.{BaseScreen, ClientScreen, PathChanged, ScreenContentReque
 import org.scalajs.dom._
 import org.scalajs.dom.raw.WebSocket
 
-class ClientApplicationManager private(app: WebApplication) extends ApplicationManager {
+class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
   private lazy val _connection = new ClientConnection(app)
 
   override def connections: Set[Connection] = Set(_connection)
@@ -13,12 +13,6 @@ class ClientApplicationManager private(app: WebApplication) extends ApplicationM
   override def connectionOption: Option[Connection] = Option(_connection)
 
   override def init(): Unit = _connection.init()
-}
-
-object ClientApplicationManager {
-  def apply(app: WebApplication): ClientApplicationManager = {
-    app.global.getOrSet("applicationManager", new ClientApplicationManager(app))
-  }
 }
 
 class ClientConnection(val app: WebApplication) extends Connection with Logging {

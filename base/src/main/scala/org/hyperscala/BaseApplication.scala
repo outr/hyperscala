@@ -8,7 +8,6 @@ import scala.language.experimental.macros
 trait BaseApplication {
   protected[hyperscala] var picklers: Vector[Pickler[_]]
 
-  final def appManager: ApplicationManager = macro BaseMacros.applicationManager
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit
   protected[hyperscala] def add(screen: BaseScreen): Unit
 

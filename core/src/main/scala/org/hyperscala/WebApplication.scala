@@ -1,6 +1,8 @@
 package org.hyperscala
 
 import com.outr.scribe.Logging
+import org.hyperscala.manager.ApplicationManager
+import org.hyperscala.manager.AppManagerCreator
 import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
@@ -23,6 +25,7 @@ abstract class WebApplication extends BaseApplication with Logging {
   private var _screens = Vector.empty[BaseScreen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
 
+  val appManager: ApplicationManager = AppManagerCreator.create(this)
   val pathChanged: Channel[PathChanged] = register[PathChanged]
   val screenContentRequest: Channel[ScreenContentRequest] = register[ScreenContentRequest]
   val screenContentResponse: Channel[ScreenContentResponse] = register[ScreenContentResponse]

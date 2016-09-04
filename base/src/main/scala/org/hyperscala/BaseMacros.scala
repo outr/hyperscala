@@ -37,24 +37,4 @@ object BaseMacros {
        """
     )
   }
-
-  def applicationManager(c: blackbox.Context): c.Expr[ApplicationManager] = {
-    import c.universe._
-
-    val isJS = try {
-      c.universe.rootMirror.staticClass("scala.scalajs.js.Any")
-      true
-    } catch {
-      case t: Throwable => false
-    }
-
-    val app = q"${c.prefix.tree}"
-    val manager = if (isJS) {
-      q"""org.hyperscala.manager.ClientApplicationManager($app)"""
-    } else {
-      q"""org.hyperscala.manager.ServerApplicationManager($app)"""
-    }
-
-    c.Expr[ApplicationManager](manager)
-  }
 }
