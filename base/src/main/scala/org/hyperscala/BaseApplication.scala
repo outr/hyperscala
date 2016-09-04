@@ -11,7 +11,7 @@ trait BaseApplication {
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit
   protected[hyperscala] def add(screen: BaseScreen): Unit
 
-  protected def register[T]: Channel[T] = macro BaseMacros.pickler[T]
+  protected def register[T]: Channel[T] = macro BaseMacros.appPickler[T]
 
   def byPath(path: String): BaseScreen
 }

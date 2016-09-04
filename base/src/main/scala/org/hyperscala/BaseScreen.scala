@@ -10,7 +10,7 @@ trait BaseScreen {
   def app: BaseApplication
   def priority: Int
 
-  protected def register[T]: Channel[T] = macro BaseMacros.pickler[T]
+  protected def register[T]: Channel[T] = macro BaseMacros.screenPickler[T]
 
   def isPathMatch(path: String): Boolean
 }
