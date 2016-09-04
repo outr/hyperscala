@@ -8,21 +8,8 @@ import pl.metastack.metarx.Channel
 import scala.language.experimental.macros
 
 abstract class WebApplication extends BaseApplication with Logging {
-  object global extends MapStore {
-    private var _map: Map[String, Any] = Map.empty
-    override def map: Map[String, Any] = _map
-
-    override def update[T](key: String, value: T): Unit = synchronized {
-      _map += key -> value
-    }
-
-    override def remove(key: String): Unit = synchronized {
-      _map -= key
-    }
-  }
-
-  override protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
-  private var _screens = Vector.empty[BaseScreen]
+  protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
+  private var _screens = Vector.empty[Screen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
 
   val appManager: ApplicationManager = AppManagerCreator.create(this)
@@ -38,8 +25,9 @@ abstract class WebApplication extends BaseApplication with Logging {
   def server[S <: Screen]: S = macro Macros.serverScreen[S]
   def communicationPath: String = "/communication"
 
-  override protected[hyperscala] def add(screen: BaseScreen): Unit = synchronized {
+  protected[hyperscala] def add(screen: Screen): Unit = synchronized {
     _screens = (_screens :+ screen).sortBy(_.priority)
+    screensByName += screen.screenName -> screen
   }
 
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit = synchronized {

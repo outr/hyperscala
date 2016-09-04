@@ -11,10 +11,13 @@ trait Screen extends BaseScreen with Logging {
     *
     * Defaults to Screen.Priority.Normal
     */
-  override def priority: Int = Screen.Priority.Normal
+  def priority: Int = Screen.Priority.Normal
 
-  override def app: WebApplication
+  def app: WebApplication
 
+  def isPathMatch(path: String): Boolean
+
+  app.add(this)
   app.screensByName += screenName -> this
 }
 

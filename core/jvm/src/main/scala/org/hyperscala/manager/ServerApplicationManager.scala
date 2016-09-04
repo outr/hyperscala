@@ -88,7 +88,7 @@ class ServerConnection(manager: ServerApplicationManager, val initialPath: Strin
   private var backlog = List.empty[String]
   private var channel: WebSocketChannel = _
 
-  override def app: BaseApplication = manager.app
+  override def app: WebApplication = manager.app
 
   override def init(): Unit = {}
 

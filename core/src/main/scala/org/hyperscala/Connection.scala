@@ -5,7 +5,7 @@ import pl.metastack.metarx.Sub
 trait Connection {
   protected var replace = false
 
-  def app: BaseApplication
+  def app: WebApplication
 
   def initialPath: String
   val path: Sub[String] = Sub(initialPath)
