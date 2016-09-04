@@ -6,6 +6,7 @@ import pl.metastack.metarx.Channel
 object ExampleApplication extends WebApplication {
   val login = create[LoginScreen]
   val dashboard = create[DashboardScreen]
+  val profile = create[ProfileScreen]
   val error = server[ErrorScreen]
 }
 
@@ -18,6 +19,10 @@ trait LoginScreen extends SimpleScreen {
 
 trait DashboardScreen extends SimpleScreen {
   override val path: String = "/dashboard.html"
+}
+
+trait ProfileScreen extends SimpleScreen {
+  override def path: String = "/profile.html"
 }
 
 trait ErrorScreen extends Screen {
