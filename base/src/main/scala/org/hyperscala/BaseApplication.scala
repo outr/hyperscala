@@ -13,7 +13,5 @@ trait BaseApplication {
 
   protected def register[T]: Channel[T] = macro BaseMacros.pickler[T]
 
-  def encodeURIComponent(value: String): String = macro BaseMacros.encodeURIComponent
-
   def byPath(path: String): BaseScreen
 }

@@ -57,7 +57,7 @@ abstract class WebApplication extends BaseApplication with Logging {
     if (args.nonEmpty) {
       b.append('?')
       val params = args.map {
-        case (key, value) => s"$key=${encodeURIComponent(value)}"
+        case (key, value) => s"$key=${Util.encodeURIComponent(value)}"
       }.mkString("&")
       b.append(params)
     }
