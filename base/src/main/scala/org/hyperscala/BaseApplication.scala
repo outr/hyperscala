@@ -20,7 +20,7 @@ trait BaseApplication {
 
   protected[hyperscala] var picklers: Vector[Pickler[_]]
 
-  protected def createApplicationManager(): ApplicationManager = macro BaseMacros.applicationManager
+  final def manager(): ApplicationManager = macro BaseMacros.applicationManager
   protected[hyperscala] def add[T](pickler: Pickler[T]): Unit
   protected[hyperscala] def add(screen: BaseScreen): Unit
 

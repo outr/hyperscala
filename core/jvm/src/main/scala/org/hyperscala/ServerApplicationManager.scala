@@ -6,7 +6,7 @@ import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage
 import io.undertow.websockets.spi.WebSocketHttpExchange
 import org.powerscala.Unique
 
-class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
+class ServerApplicationManager private(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
   private val currentConnection = new ThreadLocal[Option[Connection]] {
     override def initialValue(): Option[Connection] = None
   }
@@ -74,6 +74,12 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
       app.screenContentResponse := ScreenContentResponse(title, html, evt.screenName, serverScreen.asInstanceOf[PartialSupport].partialParentId)
     }
+  }
+}
+
+object ServerApplicationManager {
+  def apply(app: WebApplication): ServerApplicationManager = {
+    app.global.getOrSet("applicationManager", new ServerApplicationManager(app))
   }
 }
 

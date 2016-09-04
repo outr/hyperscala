@@ -47,10 +47,11 @@ object BaseMacros {
       case t: Throwable => false
     }
 
+    val app = q"${c.prefix.tree}"
     val manager = if (isJS) {
-      q"""new org.hyperscala.ClientApplicationManager(${c.prefix.tree})"""
+      q"""org.hyperscala.ClientApplicationManager($app)"""
     } else {
-      q"""new org.hyperscala.ServerApplicationManager(${c.prefix.tree})"""
+      q"""org.hyperscala.ServerApplicationManager($app)"""
     }
 
     c.Expr[ApplicationManager](manager)

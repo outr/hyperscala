@@ -10,8 +10,6 @@ abstract class WebApplication extends BaseApplication with Logging {
   private var _screens = Vector.empty[BaseScreen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
 
-  lazy val manager: ApplicationManager = createApplicationManager()
-
   val pathChanged: Channel[PathChanged] = register[PathChanged]
   val screenContentRequest: Channel[ScreenContentRequest] = register[ScreenContentRequest]
   val screenContentResponse: Channel[ScreenContentResponse] = register[ScreenContentResponse]
