@@ -56,38 +56,4 @@ object BaseMacros {
 
     c.Expr[ApplicationManager](manager)
   }
-
-  def decodeURIComponent(c: blackbox.Context)(value: c.Expr[String]): c.Expr[String] = {
-    import c.universe._
-
-    val isJS = try {
-      c.universe.rootMirror.staticClass("scala.scalajs.js.Any")
-      true
-    } catch {
-      case t: Throwable => false
-    }
-
-    if (isJS) {
-      c.Expr[String](q"""scala.scalajs.js.URIUtils.decodeURIComponent($value)""")
-    } else {
-      c.Expr[String](q"""java.net.URLDecoder.decode($value, "UTF-8")""")
-    }
-  }
-
-  def encodeURIComponent(c: blackbox.Context)(value: c.Expr[String]): c.Expr[String] = {
-    import c.universe._
-
-    val isJS = try {
-      c.universe.rootMirror.staticClass("scala.scalajs.js.Any")
-      true
-    } catch {
-      case t: Throwable => false
-    }
-
-    if (isJS) {
-      c.Expr[String](q"""scala.scalajs.js.URIUtils.encodeURIComponent($value)""")
-    } else {
-      c.Expr[String](q"""java.net.URLEncoder.encode($value, "UTF-8")""")
-    }
-  }
 }
