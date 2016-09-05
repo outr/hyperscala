@@ -15,7 +15,7 @@ trait Screen extends BaseScreen with Logging {
 
   def app: WebApplication
 
-  def isPathMatch(path: String): Boolean
+  def isURLMatch(url: URL): Boolean
 
   app.add(this)
   app.screensByName += screenName -> this

@@ -34,8 +34,8 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
     }
     val d = request.exchange match {
       case Left(exchange) if establishConnection => {
-        val path = exchange.completePath
-        val connection = app.appManager.asInstanceOf[ServerApplicationManager].createConnection(path)
+        val url = exchange.url
+        val connection = app.appManager.asInstanceOf[ServerApplicationManager].createConnection(url)
         val input = s"""<input id="hyperscala-connection-id" type="hidden" value="${connection.id}"/>"""
         deltas(request) ::: List(Delta.InsertFirstChild(ByTag("body"), input))
       }

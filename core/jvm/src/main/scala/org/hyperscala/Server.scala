@@ -1,6 +1,6 @@
 package org.hyperscala
 
-import com.outr.scribe.{Logging, Platform}
+import com.outr.scribe.Logging
 import io.undertow.server.session.{SessionAttachmentHandler, SessionConfig, SessionCookieConfig, Session => UndertowSession}
 import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
@@ -104,7 +104,7 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
           }
         })
         errorSupport {
-          val handler = mappedPathHandler.lookup(exchange.getRequestPath).orElse(defaultHandler)
+          val handler = mappedPathHandler.lookup(exchange.url).orElse(defaultHandler)
           logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
           handler.foreach(_.handleRequest(exchange))
         }
@@ -176,7 +176,7 @@ trait PathHandler extends HttpHandler {
 }
 
 trait ExplicitHandler extends PathHandler {
-  def isPathMatch(path: String): Boolean
+  def isURLMatch(url: URL): Boolean
 }
 
 trait HttpPathHandler extends HttpHandler with PathHandler
@@ -225,25 +225,23 @@ class MappedPathHandler extends PathHandler {
     throw new RuntimeException("MappedPathHandler is not a valid request handler")
   }
 
-  def lookup(path: String): Option[PathHandler] = {
-    explicitHandlers.find(_.isPathMatch(path)).orElse(
-      paths.get(path).orElse(lookup(path, path.split("[/]").toList))
-    )
+  def lookup(url: URL): Option[PathHandler] = {
+    explicitHandlers.find(_.isURLMatch(url)).orElse(paths.get(url.path).orElse(lookup(url, url.path.split("[/]").toList)))
   }
 
-  def lookup(fullPath: String, path: List[String]): Option[PathHandler] = if (path.isEmpty) {
-    explicitHandlers.find(_.isPathMatch(fullPath))
+  def lookup(url: URL, path: List[String]): Option[PathHandler] = if (path.isEmpty) {
+    explicitHandlers.find(_.isURLMatch(url))
   } else {
-    explicitHandlers.find(_.isPathMatch(fullPath))
-      .orElse(lookupRecursive(fullPath, path.head, path.tail))
-      .orElse(lookupRecursive(fullPath, "*", path.tail))
-      .orElse(lookupRecursive(fullPath, "**", path.tail))
+    explicitHandlers.find(_.isURLMatch(url))
+      .orElse(lookupRecursive(url, path.head, path.tail))
+      .orElse(lookupRecursive(url, "*", path.tail))
+      .orElse(lookupRecursive(url, "**", path.tail))
   }
 
-  private def lookupRecursive(fullPath: String, head: String, tail: List[String]): Option[PathHandler] = paths.get(head) match {
+  private def lookupRecursive(url: URL, head: String, tail: List[String]): Option[PathHandler] = paths.get(head) match {
     case None => None
     case Some(handler) => handler match {
-      case h: MappedPathHandler => h.lookup(fullPath, tail)
+      case h: MappedPathHandler => h.lookup(url, tail)
       case _ if tail.isEmpty => Some(handler)
       case _ => None
     }

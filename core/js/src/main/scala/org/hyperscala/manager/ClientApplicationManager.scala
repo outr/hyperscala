@@ -1,7 +1,7 @@
 package org.hyperscala.manager
 
 import com.outr.scribe.Logging
-import org.hyperscala.{BaseScreen, ClientScreen, PathChanged, ScreenContentRequest, _}
+import org.hyperscala.{BaseScreen, ClientScreen, ScreenContentRequest, URL, _}
 import org.scalajs.dom._
 import org.scalajs.dom.raw.WebSocket
 
@@ -17,15 +17,14 @@ class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
 
 class ClientConnection(val app: WebApplication) extends Connection with Logging {
   private lazy val connectionId = byId[html.Input]("hyperscala-connection-id").value
-  private lazy val url = s"ws://${window.location.host}${app.communicationPath}?$connectionId"
-  private lazy val webSocket = new WebSocket(url)
+  private lazy val webSocket = new WebSocket(s"ws://${window.location.host}${app.communicationPath}?$connectionId")
 
   private var connected = false
   private var queue = List.empty[String]
 
   private var popping = false
 
-  override def initialPath: String = completePath
+  override def initialURL: URL = URL(document.location.href)
 
   override def init(): Unit = {
     webSocket.onopen = (evt: Event) => {
@@ -105,8 +104,8 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   private var previous: Option[BaseScreen] = None
 
   def updateScreen(): ClientScreen = {
-    val path = document.location.pathname
-    val s = app.byPath(path)
+    val url = URL(document.location.href)
+    val s = app.byURL(url)
     if (screen.get != s) {
       screen := s
     }
@@ -124,7 +123,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
       }
       val s = newScreen.asInstanceOf[ClientScreen]
       if (!s.loaded) {
-        app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href.substring(document.location.href.indexOf('/', 8)), replace)
+        app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href, replace)
       }
       updateState()
       s.show()
@@ -134,10 +133,10 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
 
   private var previousState: String = ""
 
-  def updateState(): Unit = if (document.location.pathname != previousState) {
-    logger.info(s"Updating state from ${previousState} to ${document.location.pathname}")
-    previousState = document.location.pathname
-    app.pathChanged := PathChanged(document.location.pathname)
+  def updateState(): Unit = if (document.location.href != previousState) {
+    logger.info(s"Updating state from ${previousState} to ${document.location.href}")
+    previousState = document.location.href
+    app.urlChanged := URLChanged(document.location.href)
     updateScreen()
   }
 

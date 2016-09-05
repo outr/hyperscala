@@ -7,10 +7,10 @@ trait SimpleClientScreen[Main <: HTMLElement] extends ClientScreen with SimpleSc
 
   protected def isReplace: Boolean = false
 
-  override protected def activate(): Option[PathChange] = {
+  override protected def activate(url: URL): Option[URLChange] = {
     logger.debug(s"activate $toString, $path")
     main.style.display = "block"
-    Some(PathChange(path, isReplace))
+    Some(URLChange(url.copy(path = path), isReplace))
   }
 
   override protected def deactivate(): Unit = {

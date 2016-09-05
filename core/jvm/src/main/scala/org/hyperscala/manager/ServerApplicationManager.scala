@@ -4,7 +4,7 @@ import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core._
 import io.undertow.websockets.spi.WebSocketHttpExchange
-import org.hyperscala.{Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, WebApplication}
+import org.hyperscala.{Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, URL, WebApplication}
 import org.powerscala.Unique
 
 class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
@@ -13,8 +13,8 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   }
   private var unboundConnections = Map.empty[String, ServerConnection]
 
-  def createConnection(path: String): ServerConnection = synchronized {
-    val c = new ServerConnection(this, path)
+  def createConnection(url: URL): ServerConnection = synchronized {
+    val c = new ServerConnection(this, url)
     unboundConnections += c.id -> c
     c.init()
     c
@@ -53,9 +53,10 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   override def connection: ServerConnection = super.connection.asInstanceOf[ServerConnection]
 
   override def init(): Unit = {
-    app.pathChanged.attach { evt =>
+    app.urlChanged.attach { evt =>
       val previousScreen = connection.screen.get
-      val newScreen = app.byPath(evt.path)
+      val url = URL(evt.url)
+      val newScreen = app.byURL(url)
       logger.debug(s"Path Changed: $evt, previous: $previousScreen, new: $newScreen")
       if (previousScreen != newScreen) {
         previousScreen.asInstanceOf[ServerScreen].deactivate(connection)
@@ -66,8 +67,9 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       }
     }
     app.screenContentRequest.attach { evt =>
-      if (connection.path.get != evt.path) {
-        connection.path := evt.path
+      val url = URL(evt.url)
+      if (connection.url.get != url) {
+        connection.url := url
       }
       val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}."))
       val serverScreen = screen.asInstanceOf[ServerScreen]
@@ -78,7 +80,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   }
 }
 
-class ServerConnection(manager: ServerApplicationManager, val initialPath: String) extends AbstractReceiveListener with Connection with Logging {
+class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) extends AbstractReceiveListener with Connection with Logging {
   val id: String = Unique()
   val created: Long = System.currentTimeMillis()
   var lastActive: Long = System.currentTimeMillis()

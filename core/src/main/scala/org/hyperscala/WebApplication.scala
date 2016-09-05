@@ -14,7 +14,7 @@ abstract class WebApplication extends BaseApplication with Logging {
   private[hyperscala] var screensByName = Map.empty[String, Screen]
 
   val appManager: ApplicationManager = AppManagerCreator.create(this)
-  val pathChanged: Channel[PathChanged] = register[PathChanged]
+  val urlChanged: Channel[URLChanged] = register[URLChanged]
   val screenContentRequest: Channel[ScreenContentRequest] = register[ScreenContentRequest]
   val screenContentResponse: Channel[ScreenContentResponse] = register[ScreenContentResponse]
 
@@ -43,14 +43,14 @@ abstract class WebApplication extends BaseApplication with Logging {
   }
 
   def init(): Unit = errorSupport {
-    pathChanged.attach { evt =>
-      connection.path := evt.path
+    urlChanged.attach { evt =>
+      connection.url := URL(evt.url)
     }
     appManager.init()
   }
 
-  def byPath(path: String): Screen = {
-    screens.find(_.isPathMatch(path)).getOrElse(throw new RuntimeException(s"No screen found for the specified path: $path."))
+  def byURL(url: URL): Screen = {
+    screens.find(_.isURLMatch(url)).getOrElse(throw new RuntimeException(s"No screen found for the specified url: $url."))
   }
 
   def byName(screenName: String): Option[Screen] = screensByName.get(screenName)

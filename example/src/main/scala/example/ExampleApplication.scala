@@ -1,6 +1,6 @@
 package example
 
-import org.hyperscala.{Screen, SimpleScreen, WebApplication}
+import org.hyperscala.{Screen, SimpleScreen, URL, WebApplication}
 import pl.metastack.metarx.Channel
 
 object ExampleApplication extends WebApplication {
@@ -26,7 +26,7 @@ trait ProfileScreen extends SimpleScreen {
 }
 
 trait ErrorScreen extends Screen {
-  override def isPathMatch(path: String): Boolean = false
+  override def isURLMatch(url: URL): Boolean = false
 }
 
 case class Authentication(username: String, password: String)

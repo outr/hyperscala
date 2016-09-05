@@ -66,16 +66,16 @@ trait ClientScreen extends Screen {
   }
   private def doActivate(): Unit = if (!activated) {
     activated = true
-    activate() match {
-      case Some(pathChange) => {
-        val currentPath = app.connection.path.get
-        if (pathChange.path != currentPath || pathChange.force) {
+    val currentURL = app.connection.url.get
+    activate(currentURL) match {
+      case Some(urlChange) => {
+        if (urlChange.url != currentURL || urlChange.force) {
           val c = app.connection.asInstanceOf[ClientConnection]
-          logger.info(s"Path changing to ${pathChange.path}")
-          if (pathChange.replace || app.connection.replace) {
-            c.replacePath(pathChange.path)
+          logger.info(s"URL changing to ${urlChange.url}")
+          if (urlChange.replace || app.connection.replace) {
+            c.replacePath(urlChange.url.toString)
           } else {
-            c.pushPath(pathChange.path)
+            c.pushPath(urlChange.url.toString)
           }
           c.updateState()
         }
@@ -99,10 +99,10 @@ trait ClientScreen extends Screen {
   /**
     * Called after init() when this Screen should be displayed.
     *
-    * @return path change for this Screen if there is an explicit path. Will only apply if the path is different or if
+    * @return url change for this Screen if there is an explicit url. Will only apply if the url is different or if
     *         force is set to true.
     */
-  protected def activate(): Option[PathChange]
+  protected def activate(url: URL): Option[URLChange]
 
   /**
     * Deactivates the screen. Guaranteed to only be called after init and activate have been called. Called immediately
@@ -114,12 +114,12 @@ trait ClientScreen extends Screen {
 /**
   * PathChange represents a path change request that returns from a ClientScreen.activate.
   *
-  * @param path the new path to set.
+  * @param url the new url to set.
   * @param replace replaces the current path in the browser history if true or pushes a new state if false. Defaults to
   *                false.
   * @param force forces the state change even if the path is the same as the current path. Defaults to false.
   */
-case class PathChange(path: String, replace: Boolean = false, force: Boolean = false)
+case class URLChange(url: URL, replace: Boolean = false, force: Boolean = false)
 
 sealed trait StateChange
 
