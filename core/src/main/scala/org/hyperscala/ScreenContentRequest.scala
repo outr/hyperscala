@@ -1,3 +1,3 @@
 package org.hyperscala
 
-case class ScreenContentRequest(screenName: String, path: String)
+case class ScreenContentRequest(screenName: String, path: String, replace: Boolean)

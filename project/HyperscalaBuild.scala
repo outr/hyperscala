@@ -152,7 +152,7 @@ object Dependencies {
   val undertow = "1.4.0.CR3"
   val uPickle = "0.4.1"
   val scalaTest = "3.0.0-M16-SNAP4"
-  val metaRx = "0.1.7"
+  val metaRx = "0.1.8-SNAPSHOT"
   val powerscala = "2.0.2"
   val scalaJSDOM = "0.9.1"
 }

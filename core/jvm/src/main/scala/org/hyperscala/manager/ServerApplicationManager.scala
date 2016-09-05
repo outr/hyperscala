@@ -4,7 +4,7 @@ import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core._
 import io.undertow.websockets.spi.WebSocketHttpExchange
-import org.hyperscala.{BaseApplication, Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, WebApplication}
+import org.hyperscala.{Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, WebApplication}
 import org.powerscala.Unique
 
 class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
@@ -73,7 +73,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       val serverScreen = screen.asInstanceOf[ServerScreen]
       val title = serverScreen.title()
       val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
-      app.screenContentResponse := ScreenContentResponse(title, html, evt.screenName, serverScreen.asInstanceOf[PartialSupport].partialParentId)
+      app.screenContentResponse := ScreenContentResponse(title, html, evt.screenName, serverScreen.asInstanceOf[PartialSupport].partialParentId, evt.replace)
     }
   }
 }

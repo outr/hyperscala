@@ -70,7 +70,12 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     app.screenContentResponse.attach { evt =>
       val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}.")).asInstanceOf[ClientScreen]
       logger.debug(s"Received Screen content: ${evt.content} for ${evt.screenName} (screen: $screen)")
-      screen.load(Some(evt))
+      try {
+        replace = evt.replace
+        screen.load(Some(evt))
+      } finally {
+        replace = false
+      }
     }
 
     // Listen for history changes
@@ -118,26 +123,8 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
         case None => // No previous screen defined
       }
       val s = newScreen.asInstanceOf[ClientScreen]
-      logger.info(s"Changing screen to: $s")
-      // TODO: allow the screen to change the URL and push state
-//      s.path match {
-//        case Some(path) => {
-//          if (firstScreen) {
-//            firstScreen = false
-//          } else if (!popping) {
-//            if (replace) {
-//              logger.info(s"Replacing state: $path")
-//              window.history.replaceState(path, path, path)
-//            } else {
-//              logger.info(s"Pushing state: $path")
-//              window.history.pushState(path, path, path)
-//            }
-//          }
-//        }
-//        case None => // Screen doesn't affect history
-//      }
       if (!s.loaded) {
-        app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href.substring(document.location.href.indexOf('/', 8)))
+        app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href.substring(document.location.href.indexOf('/', 8)), replace)
       }
       updateState()
       s.show()
@@ -147,10 +134,11 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
 
   private var previousState: String = ""
 
-  private def updateState(): Unit = if (document.location.pathname != previousState) {
+  def updateState(): Unit = if (document.location.pathname != previousState) {
     logger.info(s"Updating state from ${previousState} to ${document.location.pathname}")
     previousState = document.location.pathname
     app.pathChanged := PathChanged(document.location.pathname)
+    updateScreen()
   }
 
   override def send(id: Int, json: String): Unit = {

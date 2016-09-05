@@ -1,3 +1,3 @@
 package org.hyperscala
 
-case class ScreenContentResponse(title: String, content: String, screenName: String, parentId: String)
+case class ScreenContentResponse(title: String, content: String, screenName: String, parentId: String, replace: Boolean)

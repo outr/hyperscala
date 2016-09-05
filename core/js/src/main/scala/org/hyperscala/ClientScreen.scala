@@ -70,11 +70,14 @@ trait ClientScreen extends Screen {
       case Some(pathChange) => {
         val currentPath = app.connection.path.get
         if (pathChange.path != currentPath || pathChange.force) {
-          if (pathChange.replace) {
-            app.connection.asInstanceOf[ClientConnection].replacePath(pathChange.path)
+          val c = app.connection.asInstanceOf[ClientConnection]
+          logger.info(s"Path changing to ${pathChange.path}")
+          if (pathChange.replace || app.connection.replace) {
+            c.replacePath(pathChange.path)
           } else {
-            app.connection.asInstanceOf[ClientConnection].pushPath(pathChange.path)
+            c.pushPath(pathChange.path)
           }
+          c.updateState()
         }
       }
       case None => // No path change requested

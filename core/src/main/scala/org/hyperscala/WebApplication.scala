@@ -2,12 +2,13 @@ package org.hyperscala
 
 import com.outr.scribe.Logging
 import org.hyperscala.manager.ApplicationManager
-import org.hyperscala.manager.AppManagerCreator
 import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
 
 abstract class WebApplication extends BaseApplication with Logging {
+  Channel.ValidateCyclical = false
+
   protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   private var _screens = Vector.empty[Screen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
@@ -17,7 +18,7 @@ abstract class WebApplication extends BaseApplication with Logging {
   val screenContentRequest: Channel[ScreenContentRequest] = register[ScreenContentRequest]
   val screenContentResponse: Channel[ScreenContentResponse] = register[ScreenContentResponse]
 
-  def screens: Vector[Screen] = _screens.asInstanceOf[Vector[Screen]]
+  def screens: Vector[Screen] = _screens
 
   def connection: Connection = appManager.connection
 

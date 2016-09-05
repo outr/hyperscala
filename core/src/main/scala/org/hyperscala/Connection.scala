@@ -3,7 +3,7 @@ package org.hyperscala
 import pl.metastack.metarx.Sub
 
 trait Connection {
-  protected var replace = false
+  protected[hyperscala] var replace = false
 
   def app: WebApplication
 
