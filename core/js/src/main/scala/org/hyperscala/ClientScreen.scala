@@ -64,7 +64,7 @@ trait ClientScreen extends Screen {
       }
     }
   }
-  private[hyperscala] def doActivate(): Unit = if (!activated) {
+  private def doActivate(): Unit = if (!activated) {
     activated = true
     activate() match {
       case Some(pathChange) => {

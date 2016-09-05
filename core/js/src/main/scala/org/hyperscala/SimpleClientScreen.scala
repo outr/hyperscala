@@ -8,7 +8,7 @@ trait SimpleClientScreen[Main <: HTMLElement] extends ClientScreen with SimpleSc
   protected def isReplace: Boolean = false
 
   override protected def activate(): Option[PathChange] = {
-    logger.info(s"activate $toString")
+    logger.info(s"activate $toString, $path")
     main.style.display = "block"
     Some(PathChange(path, isReplace))
   }

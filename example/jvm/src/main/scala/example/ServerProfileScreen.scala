@@ -11,7 +11,7 @@ trait ServerProfileScreen extends ProfileScreen with ServerScreen with PartialSu
 
   override def partialParentId: String = "content"
 
-  override def partialSelector: Selector = ById("example")
+  override def partialSelector: Selector = ById("profile")
 
   override def deltas(request: Request): List[Delta] = Nil
 
