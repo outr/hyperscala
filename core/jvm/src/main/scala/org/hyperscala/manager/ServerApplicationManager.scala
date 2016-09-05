@@ -55,8 +55,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   override def init(): Unit = {
     app.urlChanged.attach { evt =>
       val previousScreen = connection.screen.get
-      val url = URL(evt.url)
-      val newScreen = app.byURL(url)
+      val newScreen = app.byURL(evt.url)
       logger.debug(s"Path Changed: $evt, previous: $previousScreen, new: $newScreen")
       if (previousScreen != newScreen) {
         previousScreen.asInstanceOf[ServerScreen].deactivate(connection)
@@ -67,9 +66,8 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       }
     }
     app.screenContentRequest.attach { evt =>
-      val url = URL(evt.url)
-      if (connection.url.get != url) {
-        connection.url := url
+      if (connection.url.get != evt.url) {
+        connection.url := evt.url
       }
       val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}."))
       val serverScreen = screen.asInstanceOf[ServerScreen]

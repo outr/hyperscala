@@ -9,8 +9,6 @@ trait Connection {
 
   def initialURL: URL
   val url: Sub[URL] = Sub(initialURL)
-//  val path: Sub[String] = Sub(url.map(_.path))
-//  val params: Sub[Map[String, Param]] = Sub(url.map(_.parameters))
   val screen: Sub[BaseScreen] = Sub(app.byURL(initialURL))
 
   def init(): Unit

@@ -123,7 +123,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
       }
       val s = newScreen.asInstanceOf[ClientScreen]
       if (!s.loaded) {
-        app.screenContentRequest := ScreenContentRequest(s.screenName, document.location.href, replace)
+        app.screenContentRequest := ScreenContentRequest(s.screenName, URL(document.location.href), replace)
       }
       updateState()
       s.show()
@@ -136,7 +136,7 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   def updateState(): Unit = if (document.location.href != previousState) {
     logger.info(s"Updating state from ${previousState} to ${document.location.href}")
     previousState = document.location.href
-    app.urlChanged := URLChanged(document.location.href)
+    app.urlChanged := URLChanged(URL(document.location.href))
     updateScreen()
   }
 

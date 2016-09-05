@@ -1,3 +1,3 @@
 package org.hyperscala
 
-case class URLChanged(url: String)
+case class URLChanged(url: URL)

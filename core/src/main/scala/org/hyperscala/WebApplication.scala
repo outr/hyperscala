@@ -4,6 +4,8 @@ import com.outr.scribe.Logging
 import org.hyperscala.manager.ApplicationManager
 import pl.metastack.metarx.Channel
 
+import org.hyperscala.manager._
+
 import scala.language.experimental.macros
 
 abstract class WebApplication extends BaseApplication with Logging {
@@ -44,7 +46,7 @@ abstract class WebApplication extends BaseApplication with Logging {
 
   def init(): Unit = errorSupport {
     urlChanged.attach { evt =>
-      connection.url := URL(evt.url)
+      connection.url := evt.url
     }
     appManager.init()
   }
