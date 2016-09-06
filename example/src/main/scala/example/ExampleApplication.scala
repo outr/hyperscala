@@ -3,7 +3,7 @@ package example
 import org.hyperscala.{Screen, SimpleScreen, SiteType, URL, WebApplication}
 import pl.metastack.metarx.Channel
 
-object ExampleApplication extends WebApplication(SiteType.MultiPage) {
+object ExampleApplication extends WebApplication(SiteType.SinglePage) {
   val login = create[LoginScreen]
   val dashboard = create[DashboardScreen]
   val profile = create[ProfileScreen]

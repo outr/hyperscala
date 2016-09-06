@@ -93,7 +93,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   def pushURL(url: URL): Unit = app.siteType match {
     case SiteType.SinglePage => {
       val urlString = url.toString
-      logger.info(s"pushPath: $urlString")
+      logger.debug(s"pushPath: $urlString")
       window.history.pushState(urlString, urlString, urlString)
       updateScreen()
     }
@@ -105,7 +105,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   def replaceURL(url: URL): Unit = app.siteType match {
     case SiteType.SinglePage => {
       val urlString = url.toString
-      logger.info(s"replacePath: $urlString")
+      logger.debug(s"replacePath: $urlString")
       window.history.replaceState(urlString, urlString, urlString)
       updateScreen()
     }
@@ -117,7 +117,6 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   private var previous: Option[BaseScreen] = None
 
   def updateScreen(): ClientScreen = {
-    logger.info(s"updating screen...")
     val url = URL(document.location.href)
     val s = app.byURL(url)
     if (screen.get != s) {
@@ -127,7 +126,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   }
 
   private def screenChanged(newScreen: BaseScreen): Unit = {
-    logger.info(s"screenChanged: $newScreen from $previous")
+    logger.debug(s"screenChanged: $newScreen from $previous")
     if (!previous.contains(newScreen)) {
       previous match {
         case Some(scrn) => scrn match {
@@ -148,7 +147,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   private var previousState: String = ""
 
   def updateState(): Unit = if (document.location.href != previousState) {
-    logger.info(s"Updating state from ${previousState} to ${document.location.href}")
+    logger.debug(s"Updating state from ${previousState} to ${document.location.href}")
     previousState = document.location.href
     app.urlChanged := URLChanged(URL(document.location.href))
     updateScreen()
