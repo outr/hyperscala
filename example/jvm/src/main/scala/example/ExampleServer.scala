@@ -5,7 +5,7 @@ import java.io.File
 import org.hyperscala._
 
 object ExampleServer {
-  val server = Server(ExampleApplication, "localhost", 8080)
+  val server = Server(ExampleApplication, "0.0.0.0", 8080)
 
   def session: ExampleSession = ExampleSession()
 

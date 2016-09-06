@@ -15,7 +15,7 @@ object HyperscalaBuild extends Build {
       libraryDependencies ++= Seq(
         "com.outr.scribe" %%% "scribe" % Dependencies.scribe,
         "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
-        "pl.metastack" %%% "metarx" % Dependencies.metaRx,
+        "com.outr" %%% "metarx" % Dependencies.metaRx,
         "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
       ),
       autoAPIMappings := true,
@@ -30,8 +30,7 @@ object HyperscalaBuild extends Build {
     .jvmSettings(
       libraryDependencies ++= Seq(
         "com.outr.scribe" %% "scribe-slf4j" % Dependencies.scribe,
-        "io.undertow" % "undertow-core" % Dependencies.undertow,
-        "org.powerscala" %% "powerscala-io" % Dependencies.powerscala
+        "io.undertow" % "undertow-core" % Dependencies.undertow
       )
     )
   lazy val baseJS = base.js
@@ -45,7 +44,7 @@ object HyperscalaBuild extends Build {
       libraryDependencies ++= Seq(
         "com.outr.scribe" %%% "scribe" % Dependencies.scribe,
         "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
-        "pl.metastack" %%% "metarx" % Dependencies.metaRx,
+        "com.outr" %%% "metarx" % Dependencies.metaRx,
         "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
       ),
       autoAPIMappings := true,
@@ -60,9 +59,7 @@ object HyperscalaBuild extends Build {
     .jvmSettings(
       libraryDependencies ++= Seq(
         "com.outr.scribe" %% "scribe-slf4j" % Dependencies.scribe,
-        "io.undertow" % "undertow-core" % Dependencies.undertow,
-        "org.powerscala" %% "powerscala-core" % Dependencies.powerscala,
-        "org.powerscala" %% "powerscala-io" % Dependencies.powerscala
+        "io.undertow" % "undertow-core" % Dependencies.undertow
       )
     )
   lazy val coreJS = core.js.dependsOn(baseJS)
@@ -152,8 +149,7 @@ object Dependencies {
   val undertow = "1.4.0.CR3"
   val uPickle = "0.4.1"
   val scalaTest = "3.0.0-M16-SNAP4"
-  val metaRx = "0.1.8-SNAPSHOT"
-  val powerscala = "2.0.2"
+  val metaRx = "0.1.8-cyclical"
   val scalaJSDOM = "0.9.1"
 }
 

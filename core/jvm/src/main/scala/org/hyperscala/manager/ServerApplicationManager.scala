@@ -4,8 +4,7 @@ import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core._
 import io.undertow.websockets.spi.WebSocketHttpExchange
-import org.hyperscala.{Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, URL, WebApplication}
-import org.powerscala.Unique
+import org.hyperscala.{Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, URL, Unique, WebApplication}
 
 class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
   private val currentConnection = new ThreadLocal[Option[Connection]] {

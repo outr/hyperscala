@@ -46,7 +46,9 @@ abstract class WebApplication(val siteType: SiteType) extends BaseApplication wi
 
   def init(): Unit = errorSupport {
     urlChanged.attach { evt =>
-      connection.url := evt.url
+      if (connection.url.get != evt.url) {
+        connection.url := evt.url
+      }
     }
     appManager.init()
   }

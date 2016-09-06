@@ -1,17 +1,20 @@
 package org.hyperscala
 
+import com.outr.scribe.Logging
 import pl.metastack.metarx.Sub
 
-trait Connection {
+trait Connection extends Logging {
   protected[hyperscala] var replace = false
 
   def app: WebApplication
 
   def initialURL: URL
-  val url: Sub[URL] = Sub(initialURL)
-  val screen: Sub[BaseScreen] = Sub(app.byURL(initialURL))
+  lazy val url: Sub[URL] = Sub(initialURL)
+  lazy val screen: Sub[BaseScreen] = Sub(app.byURL(initialURL))
 
-  def init(): Unit
+  def init(): Unit = {
+    logger.info(s"Initial URL: ${url.get}, Starting Screen: ${screen.get}")
+  }
 
   def replaceWith(path: String): Unit = {
     replace = true

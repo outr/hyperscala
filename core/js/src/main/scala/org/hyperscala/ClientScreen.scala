@@ -73,9 +73,9 @@ trait ClientScreen extends Screen {
           val c = app.connection.asInstanceOf[ClientConnection]
           logger.info(s"URL changing to ${urlChange.url}")
           if (urlChange.replace || app.connection.replace) {
-            c.replacePath(urlChange.url.toString)
+            c.replaceURL(urlChange.url)
           } else {
-            c.pushPath(urlChange.url.toString)
+            c.pushURL(urlChange.url)
           }
           c.updateState()
         }

@@ -1,12 +1,13 @@
 package org.hyperscala.manager
 
 import com.outr.scribe.Logging
-import org.hyperscala.{BaseScreen, ClientScreen, ScreenContentRequest, URL, _}
+import org.hyperscala._
 import org.scalajs.dom._
 import org.scalajs.dom.raw.WebSocket
+import org.hyperscala.URL
 
 class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
-  private lazy val _connection = new ClientConnection(app)
+  private val _connection = new ClientConnection(app, URL(document.location.href))
 
   override def connections: Set[Connection] = Set(_connection)
 
@@ -15,7 +16,7 @@ class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
   override def init(): Unit = _connection.init()
 }
 
-class ClientConnection(val app: WebApplication) extends Connection with Logging {
+class ClientConnection(val app: WebApplication, val initialURL: URL) extends Connection with Logging {
   private lazy val connectionId = byId[html.Input]("hyperscala-connection-id").value
   private lazy val webSocket = new WebSocket(s"ws://${window.location.host}${app.communicationPath}?$connectionId")
 
@@ -23,8 +24,6 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
   private var queue = List.empty[String]
 
   private var popping = false
-
-  override def initialURL: URL = URL(document.location.href)
 
   override def init(): Unit = {
     webSocket.onopen = (evt: Event) => {
@@ -91,29 +90,34 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     screen.attach(screenChanged)
   }
 
-  def pushPath(path: String): Unit = app.siteType match {
+  def pushURL(url: URL): Unit = app.siteType match {
     case SiteType.SinglePage => {
-      window.history.pushState(path, path, path)
+      val urlString = url.toString
+      logger.info(s"pushPath: $urlString")
+      window.history.pushState(urlString, urlString, urlString)
       updateScreen()
     }
     case SiteType.MultiPage => {
-      window.location.href = path
+      window.location.href = url.toString
     }
   }
 
-  def replacePath(path: String): Unit = app.siteType match {
+  def replaceURL(url: URL): Unit = app.siteType match {
     case SiteType.SinglePage => {
-      window.history.replaceState(path, path, path)
+      val urlString = url.toString
+      logger.info(s"replacePath: $urlString")
+      window.history.replaceState(urlString, urlString, urlString)
       updateScreen()
     }
     case SiteType.MultiPage => {
-      window.location.replace(path)
+      window.location.replace(url.toString)
     }
   }
 
   private var previous: Option[BaseScreen] = None
 
   def updateScreen(): ClientScreen = {
+    logger.info(s"updating screen...")
     val url = URL(document.location.href)
     val s = app.byURL(url)
     if (screen.get != s) {
