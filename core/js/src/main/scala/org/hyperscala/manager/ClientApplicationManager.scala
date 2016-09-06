@@ -91,14 +91,24 @@ class ClientConnection(val app: WebApplication) extends Connection with Logging 
     screen.attach(screenChanged)
   }
 
-  def pushPath(path: String): Unit = {
-    window.history.pushState(path, path, path)
-    updateScreen()
+  def pushPath(path: String): Unit = app.siteType match {
+    case SiteType.SinglePage => {
+      window.history.pushState(path, path, path)
+      updateScreen()
+    }
+    case SiteType.MultiPage => {
+      window.location.href = path
+    }
   }
 
-  def replacePath(path: String): Unit = {
-    window.history.replaceState(path, path, path)
-    updateScreen()
+  def replacePath(path: String): Unit = app.siteType match {
+    case SiteType.SinglePage => {
+      window.history.replaceState(path, path, path)
+      updateScreen()
+    }
+    case SiteType.MultiPage => {
+      window.location.replace(path)
+    }
   }
 
   private var previous: Option[BaseScreen] = None

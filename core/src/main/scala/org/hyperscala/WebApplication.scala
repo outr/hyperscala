@@ -8,7 +8,7 @@ import org.hyperscala.manager._
 
 import scala.language.experimental.macros
 
-abstract class WebApplication extends BaseApplication with Logging {
+abstract class WebApplication(val siteType: SiteType) extends BaseApplication with Logging {
   Channel.ValidateCyclical = false
 
   protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
