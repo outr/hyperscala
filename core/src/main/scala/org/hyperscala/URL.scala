@@ -5,6 +5,17 @@ case class URL(protocol: Protocol = Protocol.Http,
                port: Int = 80,
                path: String = "/",
                parameters: Map[String, Param] = Map.empty) {
+  def withParam(key: String, value: String, replace: Boolean = true): URL = {
+    val params: Map[String, Param] = if (replace) {
+      parameters + (key -> Param(List(value)))
+    } else {
+      parameters + (key -> Param(value :: parameters.get(key).map(_.values).getOrElse(Nil)))
+    }
+    copy(parameters = params)
+  }
+
+  def param(key: String): Option[String] = parameters.get(key).map(_.value)
+
   override def toString: String = {
     val b = new StringBuilder
     b.append(protocol.scheme)

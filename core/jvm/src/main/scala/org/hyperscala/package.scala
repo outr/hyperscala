@@ -26,7 +26,7 @@ package object hyperscala {
     }
     lazy val url: URL = {
       val s = query match {
-        case Some(q) => s"${exchange.getRequestURL}?$query"
+        case Some(q) => s"${exchange.getRequestURL}?$q"
         case None => exchange.getRequestURL
       }
       URL(s)
