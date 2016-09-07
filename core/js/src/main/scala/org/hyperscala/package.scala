@@ -1,9 +1,12 @@
 package org
 
 import com.outr.scribe.Logging
+import org.hyperscala.manager.ClientConnection
 import org.scalajs.dom._
 import org.scalajs.dom.ext._
 import org.scalajs.dom.raw.HTMLElement
+
+import scala.language.implicitConversions
 
 package object hyperscala extends Logging {
   def byTag[T <: HTMLElement](tagName: String): Vector[T] = {
@@ -21,6 +24,8 @@ package object hyperscala extends Logging {
       throw new RuntimeException(message)
     }
   }
+
+  implicit def connection2ClientConnection(connection: Connection): ClientConnection = connection.asInstanceOf[ClientConnection]
 
   implicit class HTMLElementExtras(e: HTMLElement) {
     def byTag[T <: HTMLElement](tagName: String): Vector[T] = {

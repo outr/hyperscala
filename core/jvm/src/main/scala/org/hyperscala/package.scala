@@ -2,6 +2,7 @@ package org
 
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.AttachmentKey
+import org.hyperscala.manager.ServerConnection
 
 import scala.language.implicitConversions
 
@@ -9,6 +10,9 @@ package object hyperscala {
   implicit def screen2ServerScreen(screen: BaseScreen): ServerScreen = screen.asInstanceOf[ServerScreen]
 
   private val attachmentKey = AttachmentKey.create[ExtendedExchange](classOf[ExtendedExchange])
+
+  implicit def connection2ServerConnection(connection: Connection): ServerConnection = connection.asInstanceOf[ServerConnection]
+
   // Cache so we don't create multiple for performance reasons
   implicit def exchange2Extended(exchange: HttpServerExchange): ExtendedExchange = Option(exchange.getAttachment[ExtendedExchange](attachmentKey)) match {
     case Some(ee) => ee

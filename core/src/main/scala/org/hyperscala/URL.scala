@@ -7,9 +7,17 @@ case class URL(protocol: Protocol = Protocol.Http,
                parameters: Map[String, Param] = Map.empty) {
   def withParam(key: String, value: String, replace: Boolean = true): URL = {
     val params: Map[String, Param] = if (replace) {
-      parameters + (key -> Param(List(value)))
+      if (value.nonEmpty) {
+        parameters + (key -> Param(List(value)))
+      } else {
+        parameters - key
+      }
     } else {
-      parameters + (key -> Param(value :: parameters.get(key).map(_.values).getOrElse(Nil)))
+      if (value.nonEmpty) {
+        parameters + (key -> Param(value :: parameters.get(key).map(_.values).getOrElse(Nil)))
+      } else {
+        parameters
+      }
     }
     copy(parameters = params)
   }

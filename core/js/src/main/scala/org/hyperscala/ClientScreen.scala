@@ -13,6 +13,8 @@ trait ClientScreen extends Screen {
   val title: Sub[Option[String]] = Sub(None)
   val stateChange: Channel[StateChange] = Channel()
 
+  def urlChanged(url: URL): Unit = {}
+
   def onStateChange(stateChangeType: StateChange)(f: => Unit): Unit = {
     stateChange.attach { evt =>
       if (evt eq stateChangeType) {

@@ -59,7 +59,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
       }
     }
 
-    updateScreen()
+    updateScreen(urlChanged = false)
 
     // Loading the current screen
     screen.get.asInstanceOf[ClientScreen].load(None)
@@ -90,24 +90,24 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
     screen.attach(screenChanged)
   }
 
-  def pushURL(url: URL): Unit = app.siteType match {
+  def pushURL(url: URL, force: Boolean = false): Unit = if (document.location.href != url.toString || force) app.siteType match {
     case SiteType.SinglePage => {
       val urlString = url.toString
       logger.debug(s"pushPath: $urlString")
       window.history.pushState(urlString, urlString, urlString)
-      updateScreen()
+      updateState()
     }
     case SiteType.MultiPage => {
       window.location.href = url.toString
     }
   }
 
-  def replaceURL(url: URL): Unit = app.siteType match {
+  def replaceURL(url: URL, force: Boolean = false): Unit = if (document.location.href != url.toString || force) app.siteType match {
     case SiteType.SinglePage => {
       val urlString = url.toString
       logger.debug(s"replacePath: $urlString")
       window.history.replaceState(urlString, urlString, urlString)
-      updateScreen()
+      updateState()
     }
     case SiteType.MultiPage => {
       window.location.replace(url.toString)
@@ -116,13 +116,15 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
 
   private var previous: Option[BaseScreen] = None
 
-  def updateScreen(): ClientScreen = {
+  def updateScreen(urlChanged: Boolean): ClientScreen = {
     val url = URL(document.location.href)
-    val s = app.byURL(url)
+    val s = app.byURL(url).asInstanceOf[ClientScreen]
     if (screen.get != s) {
       screen := s
+    } else if (urlChanged) {
+      s.urlChanged(url)
     }
-    s.asInstanceOf[ClientScreen]
+    s
   }
 
   private def screenChanged(newScreen: BaseScreen): Unit = {
@@ -150,7 +152,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
     logger.debug(s"Updating state from ${previousState} to ${document.location.href}")
     previousState = document.location.href
     app.urlChanged := URLChanged(URL(document.location.href))
-    updateScreen()
+    updateScreen(urlChanged = true)
   }
 
   override def send(id: Int, json: String): Unit = {
