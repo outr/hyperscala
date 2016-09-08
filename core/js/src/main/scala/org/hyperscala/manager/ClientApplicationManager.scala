@@ -13,7 +13,12 @@ class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
 
   override def connectionOption: Option[Connection] = Option(_connection)
 
-  override def init(): Unit = _connection.init()
+  override def init(): Unit = {
+    app.reloadRequest.attach { r =>
+      window.location.reload(r.force)
+    }
+    _connection.init()
+  }
 }
 
 class ClientConnection(val app: WebApplication, val initialURL: URL) extends Connection with Logging {

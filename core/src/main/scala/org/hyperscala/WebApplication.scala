@@ -19,6 +19,7 @@ abstract class WebApplication(val siteType: SiteType) extends BaseApplication wi
   val urlChanged: Channel[URLChanged] = register[URLChanged]
   val screenContentRequest: Channel[ScreenContentRequest] = register[ScreenContentRequest]
   val screenContentResponse: Channel[ScreenContentResponse] = register[ScreenContentResponse]
+  val reloadRequest: Channel[ReloadRequest] = register[ReloadRequest]
 
   def screens: Vector[Screen] = _screens
 
@@ -33,7 +34,7 @@ abstract class WebApplication(val siteType: SiteType) extends BaseApplication wi
     screensByName += screen.screenName -> screen
   }
 
-  protected[hyperscala] def add[T](pickler: Pickler[T]): Unit = synchronized {
+  protected[hyperscala] def add[T](pickler: Pickler[T]): Int = synchronized {
     val position = picklers.length
     picklers = picklers :+ pickler
     pickler.channel.attach { t =>
@@ -42,6 +43,11 @@ abstract class WebApplication(val siteType: SiteType) extends BaseApplication wi
         appManager.connection.send(position, json)
       }
     }
+    position
+  }
+
+  protected[hyperscala] def picklerForChannel[T](channel: Channel[T]): Option[Pickler[T]] = {
+    picklers.find(_.channel eq channel).asInstanceOf[Option[Pickler[T]]]
   }
 
   def init(): Unit = errorSupport {

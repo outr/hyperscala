@@ -8,7 +8,7 @@ abstract class Pickler[T](app: BaseApplication) {
   }
 
   val channel: Channel[T] = Channel[T]
-  val id = app.add(this)
+  val id: Int = app.add(this)
 
   def isReceiving(t: T): Boolean = receiving.get().contains(t)
 

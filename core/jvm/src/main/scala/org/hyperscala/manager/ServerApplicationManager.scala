@@ -4,7 +4,7 @@ import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core._
 import io.undertow.websockets.spi.WebSocketHttpExchange
-import org.hyperscala.{Connection, PartialSupport, Request, ScreenContentResponse, Server, ServerScreen, URL, Unique, WebApplication}
+import org.hyperscala.{Connection, PartialSupport, ReloadRequest, Request, ScreenContentResponse, Server, ServerScreen, URL, Unique, WebApplication}
 
 class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
   private val currentConnection = new ThreadLocal[Option[Connection]] {
@@ -21,12 +21,27 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
 
   def bindConnection(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = synchronized {
     val id = exchange.getQueryString
-    val c = unboundConnections.getOrElse(id, throw new RuntimeException(s"No unbound connection found for $id."))
-    channel.getReceiveSetter.set(c)
-    channel.resumeReceives()
-    unboundConnections -= id
-    _connections += c
-    c.bind(exchange, channel)
+    unboundConnections.get(id) match {
+      case Some(c) => {
+        channel.getReceiveSetter.set(c)
+        channel.resumeReceives()
+        unboundConnections -= id
+        _connections += c
+        c.bind(exchange, channel)
+      }
+      case None => {    // Unable to find the connection id. Mostly happens if navigating back to an old cached URL.
+        logger.info(s"Unbound connection not found by id ($id). Requesting client reload page.")
+        channel.getReceiveSetter.set(new AbstractReceiveListener {
+        })
+        channel.resumeReceives()
+
+        // Request a page reload
+        val reloadPickler = app.picklerForChannel(app.reloadRequest).get
+        val json = reloadPickler.write(ReloadRequest(force = true))
+        val message = s"${reloadPickler.id}:$json"
+        WebSockets.sendText(message, channel, None.orNull)
+      }
+    }
   }
 
   private[hyperscala] var _connections = Set.empty[Connection]
