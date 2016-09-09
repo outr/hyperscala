@@ -10,9 +10,9 @@ object ExampleServer {
   def session: ExampleSession = ExampleSession()
 
   def main(args: Array[String]): Unit = {
-    server.resourceManager.mappings.classPath("html")()
-    server.resourceManager.mappings.file(new File("src/main/web/"))()
-    server.resourceManager.mappings.file(new File("src/main/web/")) { url =>
+    server.resourceManager.classPath("html")()
+    server.resourceManager.file(new File("src/main/web/"))()
+    server.resourceManager.file(new File("src/main/web/")) { url =>
       if (url.path == "/download.txt") {
         Some(FileResourceInfo("/test.txt", "mydownload.txt"))
       } else {

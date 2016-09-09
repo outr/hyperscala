@@ -48,41 +48,39 @@ class FunctionalResourceManager extends ResourceManager {
 
   def lookup(url: URL): Option[ResourceResult] = _mappings.toStream.flatMap(_.lookup(url)).headOption
 
-  object mappings {
-    def file(directory: File)(conversion: URL => Option[FileResourceInfo] = defaultFileConversion(directory)): Unit = {
-      val canonicalBase = directory.getCanonicalPath
+  def file(directory: File)(conversion: URL => Option[FileResourceInfo] = defaultFileConversion(directory)): Unit = {
+    val canonicalBase = directory.getCanonicalPath
 
-      FunctionalResourceManager.this += new PathResourceMapping {
-        override def base: String = canonicalBase
+    FunctionalResourceManager.this += new PathResourceMapping {
+      override def base: String = canonicalBase
 
-        override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap { info =>
-          val file = info match {
-            case ExplicitFileResourceInfo(f, attachment) => f
-            case PathFileResourceInfo(path, attachment) => new File(directory, path)
-          }
-          if (file.exists()) {
-            Some(ResourceResult(new FileResource(file, fileResourceManager, file.getCanonicalPath.substring(base.length)), info.attachment))
-          } else {
-            None
-          }
+      override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap { info =>
+        val file = info match {
+          case ExplicitFileResourceInfo(f, attachment) => f
+          case PathFileResourceInfo(path, attachment) => new File(directory, path)
+        }
+        if (file.exists()) {
+          Some(ResourceResult(new FileResource(file, fileResourceManager, file.getCanonicalPath.substring(base.length)), info.attachment))
+        } else {
+          None
         }
       }
     }
-    def classPath(basePath: String)(conversion: URL => Option[ClassPathResourceInfo] = defaultURLConversion): Unit = {
-      val properBase = if (basePath.endsWith("/")) {
-        basePath.substring(1)
-      } else {
-        basePath
-      }
+  }
+  def classPath(basePath: String)(conversion: URL => Option[ClassPathResourceInfo] = defaultURLConversion): Unit = {
+    val properBase = if (basePath.endsWith("/")) {
+      basePath.substring(1)
+    } else {
+      basePath
+    }
 
-      FunctionalResourceManager.this += new ClassPathResourceMapping {
-        override def base: String = properBase
+    FunctionalResourceManager.this += new ClassPathResourceMapping {
+      override def base: String = properBase
 
-        override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap {
-          case ExplicitClassPathResourceInfo(u, attachment) => Some(u)
-          case PathClassPathResourceInfo(path, attachment) => Option(getClass.getClassLoader.getResource(s"$base$path"))
-        }.map(u => ResourceResult(new URLResource(u, u.openConnection(), u.toString)))
-      }
+      override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap {
+        case ExplicitClassPathResourceInfo(u, attachment) => Some(u)
+        case PathClassPathResourceInfo(path, attachment) => Option(getClass.getClassLoader.getResource(s"$base$path"))
+      }.map(u => ResourceResult(new URLResource(u, u.openConnection(), u.toString)))
     }
   }
 
