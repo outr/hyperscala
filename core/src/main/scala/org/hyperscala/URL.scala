@@ -5,6 +5,19 @@ case class URL(protocol: Protocol = Protocol.Http,
                port: Int = 80,
                path: String = "/",
                parameters: Map[String, Param] = Map.empty) {
+  def replacePathAndParams(pathAndParams: String): URL = {
+    val b = new StringBuilder
+    b.append(protocol.scheme)
+    b.append("://")
+    b.append(host)
+    protocol match {
+      case Protocol.Http if port == 80 => // No need
+      case Protocol.Https if port == 443 => // No need
+      case _ => b.append(s":$port")
+    }
+    b.append(pathAndParams)
+    URL(b.toString())
+  }
   def withParam(key: String, value: String, replace: Boolean = true): URL = {
     val params: Map[String, Param] = if (replace) {
       if (value.nonEmpty) {

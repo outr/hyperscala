@@ -19,12 +19,16 @@ import scala.collection.JavaConversions._
 
 class FunctionalResourceManager extends ResourceManager {
   private var listeners = Set.empty[ResourceChangeListener]
-  private var mappings = Set.empty[ResourceMapping]
+  private var _mappings = Set.empty[ResourceMapping]
 
-  private def defaultFileConversion(directory: File) = (path: String) => {
-    val f = new File(directory, path)
+  private val defaultURLConversion: URL => Option[ClassPathResourceInfo] = (url: URL) => {
+    Some(ClassPathResourceInfo(url.path))
+  }
+
+  private def defaultFileConversion(directory: File): URL => Option[FileResourceInfo] = (url: URL) => {
+    val f = new File(directory, url.path)
     if (f.exists()) {
-      Some(f)
+      Some(FileResourceInfo(f))
     } else {
       None
     }
@@ -40,67 +44,50 @@ class FunctionalResourceManager extends ResourceManager {
 
   override def isResourceChangeListenerSupported: Boolean = true
 
-  override def getResource(path: String): Resource = mappings.toStream.flatMap { m =>
-    m.lookup(path)
-  }.headOption.orNull
+  override def getResource(path: String): Resource = throw new UnsupportedOperationException("getResource should not be called directly. lookup should be used instead.")
 
-  def fileMapping(directory: File)(pathConversion: String => Option[File] = defaultFileConversion(directory)): Unit = {
-    this += new PathResourceMapping {
-      override def base: String = directory.getCanonicalPath
+  def lookup(url: URL): Option[ResourceResult] = _mappings.toStream.flatMap(_.lookup(url)).headOption
 
-      override def lookup(path: String): Option[Resource] = pathConversion(path).map(f => new FileResource(f, fileResourceManager, f.getCanonicalPath.substring(base.length)))
-    }
-  }
+  object mappings {
+    def file(directory: File)(conversion: URL => Option[FileResourceInfo] = defaultFileConversion(directory)): Unit = {
+      val canonicalBase = directory.getCanonicalPath
 
-  def filePathMapping(directory: File)(pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
-    this += new PathResourceMapping {
-      override def base: String = directory.getCanonicalPath
+      FunctionalResourceManager.this += new PathResourceMapping {
+        override def base: String = canonicalBase
 
-      override def lookup(path: String): Option[Resource] = pathConversion(path).flatMap { updated =>
-        val file = new File(directory, updated)
-        if (file.exists()) {
-          Some(new FileResource(file, fileResourceManager, updated))
-        } else {
-          None
+        override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap { info =>
+          val file = info match {
+            case ExplicitFileResourceInfo(f, attachment) => f
+            case PathFileResourceInfo(path, attachment) => new File(directory, path)
+          }
+          if (file.exists()) {
+            Some(ResourceResult(new FileResource(file, fileResourceManager, file.getCanonicalPath.substring(base.length)), info.attachment))
+          } else {
+            None
+          }
         }
       }
     }
-  }
-
-  def pathMapping(path: Path)(pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
-    this += new PathResourceMapping {
-      override def base: String = path.toAbsolutePath.toString
-
-      override def lookup(path: String): Option[Resource] = pathConversion(path).flatMap { updated =>
-        val file = new File(base, updated)
-        if (file.exists()) {
-          Some(new FileResource(file, fileResourceManager, updated))
-        } else {
-          None
-        }
-      }
-    }
-  }
-
-  def classPathMapping(path: String)(pathConversion: String => Option[String] = (s: String) => Some(s)): Unit = {
-    this += new ClassPathResourceMapping {
-      override def base: String = path match {
-        case _ if path.endsWith("/") => path.substring(0, path.length - 1)
-        case _ => path
+    def classPath(basePath: String)(conversion: URL => Option[ClassPathResourceInfo] = defaultURLConversion): Unit = {
+      val properBase = if (basePath.endsWith("/")) {
+        basePath.substring(1)
+      } else {
+        basePath
       }
 
-      override def lookup(path: String): Option[Resource] = pathConversion(path).flatMap { updated =>
-        val combined = s"$base$updated" match {
-          case c if c.startsWith("/") => c.substring(1)
-          case c => c
-        }
-        Option(getClass.getClassLoader.getResource(combined)).map(url => new URLResource(url, url.openConnection(), updated))
+      FunctionalResourceManager.this += new ClassPathResourceMapping {
+        override def base: String = properBase
+
+        override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap {
+          case ExplicitClassPathResourceInfo(u, attachment) => Some(u)
+          case PathClassPathResourceInfo(path, attachment) => Option(getClass.getClassLoader.getResource(s"$base$path"))
+        }.map(u => ResourceResult(new URLResource(u, u.openConnection(), u.toString)))
       }
     }
   }
 
   def +=(mapping: ResourceMapping): Unit = synchronized {
-    mappings += mapping
+    _mappings += mapping
   }
 
   override def close(): Unit = {}
@@ -110,10 +97,40 @@ class FunctionalResourceManager extends ResourceManager {
   }
 }
 
+sealed trait ResourceInfo {
+  def attachment: Option[String]
+}
+
+sealed trait FileResourceInfo extends ResourceInfo
+
+object FileResourceInfo {
+  def apply(file: File): FileResourceInfo = ExplicitFileResourceInfo(file, None)
+  def apply(path: String): FileResourceInfo = PathFileResourceInfo(path, None)
+  def apply(file: File, attachment: String): FileResourceInfo = ExplicitFileResourceInfo(file, Some(attachment))
+  def apply(path: String, attachment: String): FileResourceInfo = PathFileResourceInfo(path, Some(attachment))
+}
+
+case class ExplicitFileResourceInfo(file: File, attachment: Option[String]) extends FileResourceInfo
+case class PathFileResourceInfo(path: String, attachment: Option[String]) extends FileResourceInfo
+
+sealed trait ClassPathResourceInfo extends ResourceInfo
+
+object ClassPathResourceInfo {
+  def apply(url: java.net.URL): ClassPathResourceInfo = ExplicitClassPathResourceInfo(url, None)
+  def apply(path: String): ClassPathResourceInfo = PathClassPathResourceInfo(path, None)
+  def apply(url: java.net.URL, attachment: String): ClassPathResourceInfo = ExplicitClassPathResourceInfo(url, Some(attachment))
+  def apply(path: String, attachment: String): ClassPathResourceInfo = PathClassPathResourceInfo(path, Some(attachment))
+}
+
+case class ExplicitClassPathResourceInfo(url: java.net.URL, attachment: Option[String]) extends ClassPathResourceInfo
+case class PathClassPathResourceInfo(path: String, attachment: Option[String]) extends ClassPathResourceInfo
+
+case class ResourceResult(resource: Resource, attachment: Option[String] = None)
+
 trait ResourceMapping {
   def init(resourceManager: FunctionalResourceManager): Unit = {}
 
-  def lookup(path: String): Option[Resource]
+  def lookup(url: URL): Option[ResourceResult]
 }
 
 trait ClassPathResourceMapping extends ResourceMapping {
@@ -182,19 +199,24 @@ class FunctionalResourceHandler(resourceManager: FunctionalResourceManager) exte
         val dispatchTask = new HttpHandler {
           override def handleRequest(exchange: HttpServerExchange): Unit = try {
             Server.withServerSession(serverSession) {
-              val resourceOption: Option[Resource] = if ((File.separatorChar == '/' || !exchange.getRelativePath.contains(File.separator)) && isCanonicalizePaths) {
-                Option(resourceManager.getResource(CanonicalPathUtils.canonicalize(exchange.getRelativePath)))
-              } else {
-                Option(resourceManager.getResource(exchange.getRelativePath))
+              var url = exchange.url
+              if ((File.separatorChar == '/' || !exchange.getRelativePath.contains(File.separator)) && isCanonicalizePaths) {
+                url = url.copy(path = CanonicalPathUtils.canonicalize(exchange.getRelativePath))
               }
-              resourceOption match {
-                case Some(resource) => {
+              val resourceResultOption: Option[ResourceResult] = resourceManager.lookup(url)
+              resourceResultOption match {
+                case Some(resourceResult) => {
+                  val resource = resourceResult.resource
                   if (resource.isDirectory) {
                     throw new RuntimeException(s"Directories not currently supported: ${exchange.getRelativePath}")
                   } else if (exchange.getRelativePath.endsWith("/")) {
                     exchange.setStatusCode(StatusCodes.NOT_FOUND)
                     exchange.endExchange()
                   } else {
+                    resourceResult.attachment.foreach { fileName =>
+                      exchange.getResponseHeaders.put(Headers.CONTENT_DISPOSITION, s"""attachment; filename="$fileName"""")
+                    }
+
                     val etag = resource.getETag
                     val lastModified = resource.getLastModified
                     if (!ETagUtils.handleIfMatch(exchange, etag, false) || !DateUtils.handleIfUnmodifiedSince(exchange, lastModified)) {
