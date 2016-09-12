@@ -43,6 +43,7 @@ trait ClientScreen extends Screen {
         val temp = document.createElement("div")
         temp.innerHTML = c.content
         val child = temp.firstChild.asInstanceOf[html.Element]
+        logger.debug(s"Loading content: ${c.title}, ${c.screenName}, ${c.parentId}")
         Option(document.getElementById(child.id)) match {
           case Some(existing) => parent.replaceChild(child, existing)
           case None => parent.appendChild(child)
@@ -71,6 +72,11 @@ trait ClientScreen extends Screen {
     stateChange := StateChange.Initialized
     if (!isPage) {
       if (app.connection.screen.get == this) {
+        if (state == InitState.ScreenReload && activated) {
+          // Reactivate
+          doDeactivate()
+          stateChange := StateChange.Deactivated
+        }
         doActivate()
         stateChange := StateChange.Activated
       } else {
