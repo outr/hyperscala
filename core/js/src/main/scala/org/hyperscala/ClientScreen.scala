@@ -31,14 +31,22 @@ trait ClientScreen extends Screen {
     doActivate()
   }
 
-  private[hyperscala] def load(content: Option[ScreenContentResponse]): Unit = if (!loaded) {
+  def requestReloadContent(replace: Boolean = false): Unit = {
+    app.screenContentRequest := ScreenContentRequest(screenName, app.connection.url.get, replace)
+  }
+
+  private[hyperscala] def load(content: Option[ScreenContentResponse]): Unit = {
     val isPage = content match {
       case Some(c) => {
         title := Option(c.title)
         val parent = document.getElementById(c.parentId)
         val temp = document.createElement("div")
         temp.innerHTML = c.content
-        parent.appendChild(temp.firstChild)
+        val child = temp.firstChild.asInstanceOf[html.Element]
+        Option(document.getElementById(child.id)) match {
+          case Some(existing) => parent.replaceChild(child, existing)
+          case None => parent.appendChild(child)
+        }
         false
       }
       case None => {
@@ -47,6 +55,11 @@ trait ClientScreen extends Screen {
         true
       }
     }
+    val state = isPage match {
+      case _ if loaded => InitState.ScreenReload
+      case true => InitState.PageLoad
+      case false => InitState.ScreenLoad
+    }
     _loaded = true
     title.attach {
       case Some(t) => if (app.connection.screen.get == this) {
@@ -54,7 +67,7 @@ trait ClientScreen extends Screen {
       }
       case None => // No title
     }
-    init(isPage)
+    init(state)
     stateChange := StateChange.Initialized
     if (!isPage) {
       if (app.connection.screen.get == this) {
@@ -94,9 +107,9 @@ trait ClientScreen extends Screen {
     * Initializes this screen. Called after the content of the screen has been properly loaded and injected into the
     * page.
     *
-    * @param isPage true if this screen represents the loaded page and false if it was dynamically loaded
+    * @param state defines the state in which this init method is invoked.
     */
-  protected def init(isPage: Boolean): Unit
+  protected def init(state: InitState): Unit
 
   /**
     * Called after init() when this Screen should be displayed.

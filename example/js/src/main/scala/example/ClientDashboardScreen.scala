@@ -8,8 +8,8 @@ trait ClientDashboardScreen extends DashboardScreen with SimpleClientScreen[html
   def main = byId[html.Div]("example")
   def profileButton = byId[html.Button]("profileButton")
 
-  override def init(isPage: Boolean): Unit = {
-    logger.info(s"Dashboard init! (isPage: $isPage)")
+  override def init(state: InitState): Unit = {
+    logger.info(s"Dashboard init! (state: $state)")
 
     profileButton.onclick = (evt: Event) => {
       app.connection.screen := ExampleApplication.profile

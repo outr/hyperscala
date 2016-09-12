@@ -75,7 +75,7 @@ object Macros {
               override def screenName: String = $typeString
               override def app = webApp
 
-              override def init(isPage: Boolean): Unit = {}
+              override def init(state: org.hyperscala.InitState): Unit = {}
               override def activate(url: org.hyperscala.URL): Option[org.hyperscala.URLChange] = None
               override def deactivate(): Unit = {}
 

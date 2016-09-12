@@ -72,7 +72,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
     // Register listener for Screen content
     app.screenContentResponse.attach { evt =>
       val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}.")).asInstanceOf[ClientScreen]
-      logger.debug(s"Received Screen content: ${evt.content} for ${evt.screenName} (screen: $screen)")
+      logger.debug(s"Received Screen content for ${evt.screenName} (screen: $screen)")
       try {
         replace = evt.replace
         screen.load(Some(evt))
