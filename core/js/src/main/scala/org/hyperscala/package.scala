@@ -6,6 +6,7 @@ import org.scalajs.dom._
 import org.scalajs.dom.ext._
 import org.scalajs.dom.raw.HTMLElement
 
+import scala.annotation.tailrec
 import scala.language.implicitConversions
 
 package object hyperscala extends Logging {
@@ -33,6 +34,22 @@ package object hyperscala extends Logging {
     }
     def byClass[T <: HTMLElement](className: String): Vector[T] = {
       e.getElementsByClassName(className).toVector.map(_.asInstanceOf[T])
+    }
+    def parentByTag[T <: HTMLElement](tagName: String): Option[T] = findParentRecursive[T](e, (p: HTMLElement) => {
+      p.tagName == tagName
+    })
+    def parentByClass[T <: HTMLElement](className: String): Option[T] = findParentRecursive[T](e, (p: HTMLElement) => {
+      p.classList.contains(className)
+    })
+
+//    @tailrec    // TODO: figure out why this won't work
+    private def findParentRecursive[T <: HTMLElement](e: HTMLElement, finder: HTMLElement => Boolean): Option[T] = Option(e.parentElement) match {
+      case None => None
+      case Some(p) => if (finder(p)) {
+        Some(p.asInstanceOf[T])
+      } else {
+        findParentRecursive(p, finder)
+      }
     }
   }
 }
