@@ -93,15 +93,6 @@ object HyperscalaBuild extends Build {
       Resolver.typesafeRepo("releases")
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    publishTo <<= version {
-      (v: String) =>
-        val nexus = "https://oss.sonatype.org/"
-        if (v.trim.endsWith("SNAPSHOT")) {
-          Some("snapshots" at nexus + "content/repositories/snapshots")
-        } else {
-          Some("releases" at nexus + "service/local/staging/deploy/maven2")
-        }
-    },
     publishArtifact in Test := false,
     pomExtra := <url>${Details.url}</url>
       <licenses>
@@ -129,7 +120,7 @@ object HyperscalaBuild extends Build {
 object Details {
   val organization = "org.hyperscala"
   val name = "hyperscala"
-  val version = "2.0.0-SNAPSHOT"
+  val version = "2.0.0"
   val url = "http://hyperscala.org"
   val licenseType = "MIT"
   val licenseURL = "http://opensource.org/licenses/MIT"
