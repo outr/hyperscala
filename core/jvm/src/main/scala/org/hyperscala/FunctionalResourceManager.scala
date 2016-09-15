@@ -1,12 +1,10 @@
 package org.hyperscala
 
 import java.io.{File, IOException}
-import java.nio.file.Path
 import java.util
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-import io.undertow.UndertowLogger
 import io.undertow.io.IoCallback
 import io.undertow.server.handlers.ResponseCodeHandler
 import io.undertow.server.handlers.cache.ResponseCache
@@ -17,7 +15,7 @@ import org.xnio.{FileChangeCallback, FileChangeEvent, OptionMap, Xnio}
 
 import scala.collection.JavaConversions._
 
-class FunctionalResourceManager extends ResourceManager {
+class FunctionalResourceManager(val server: Server) extends ResourceManager {
   private var listeners = Set.empty[ResourceChangeListener]
   private var _mappings = Set.empty[ResourceMapping]
 
@@ -276,7 +274,7 @@ class FunctionalResourceHandler(resourceManager: FunctionalResourceManager) exte
             }
           } catch {
             case exc: IOException => {
-              UndertowLogger.REQUEST_IO_LOGGER.ioException(exc)
+              resourceManager.server.error(exc)
               exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR)
               exchange.endExchange()
             }

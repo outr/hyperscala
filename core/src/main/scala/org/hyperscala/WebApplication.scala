@@ -24,6 +24,7 @@ abstract class WebApplication(val siteType: SiteType) extends BaseApplication wi
   def screens: Vector[Screen] = _screens
 
   def connection: Connection = appManager.connection
+  def url: URL = connection.url.get
 
   def create[S <: Screen]: S = macro Macros.screen[S]
   def server[S <: Screen]: S = macro Macros.serverScreen[S]

@@ -19,7 +19,7 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
     setNext(handler)
   }
-  val resourceManager = new FunctionalResourceManager
+  val resourceManager = new FunctionalResourceManager(this)
 
   private var defaultHandler: Option[PathHandler] = None
   var errorHandler: HttpHandler = new HttpHandler {
@@ -112,8 +112,8 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
     }
   }
 
-  protected def error(t: Throwable): Unit = logger.error(t)
-  protected def errorSupport[R](f: => R): R = try {
+  def error(t: Throwable): Unit = logger.error(t)
+  def errorSupport[R](f: => R): R = try {
     f
   } catch {
     case t: Throwable => {
@@ -153,7 +153,9 @@ object Server extends Logging {
 
   def apply(app: WebApplication, host: String, port: Int, sessionDomain: Option[String] = None): Server = {
     // Instantiate Server
-    val server = new Server(host, port, sessionDomain)
+    val server = new Server(host, port, sessionDomain) {
+      override def error(t: Throwable): Unit = app.error(t)
+    }
 
     // Create WebSocket communication handler
     val webSocketCallback = app.appManager.asInstanceOf[WebSocketConnectionCallback]
