@@ -28,6 +28,15 @@ package object hyperscala extends Logging {
 
   implicit def connection2ClientConnection(connection: Connection): ClientConnection = connection.asInstanceOf[ClientConnection]
 
+  implicit class StringExtras(s: String) {
+    def toElement[T <: html.Element]: T = {
+      val temp = document.createElement("div")
+      temp.innerHTML = s
+      val child = temp.firstChild.asInstanceOf[html.Element]
+      child.asInstanceOf[T]
+    }
+  }
+
   implicit class HTMLElementExtras(e: HTMLElement) {
     def byTag[T <: HTMLElement](tagName: String): Vector[T] = {
       e.getElementsByTagName(tagName).toVector.map(_.asInstanceOf[T])
