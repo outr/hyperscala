@@ -5,6 +5,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 
 import com.outr.scribe.Logging
+import org.hyperscala.delta.{Delta, Selector}
 
 class StreamableHTML(file: File, cacheBuilder: CacheBuilder) extends Logging {
   private var cache = cacheBuilder.buildCache()

@@ -6,8 +6,9 @@ import com.outr.scribe.Logging
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.Headers
 import io.undertow.websockets.spi.WebSocketHttpExchange
+import org.hyperscala.delta.{Delta, Selector}
 import org.hyperscala.manager.{ServerApplicationManager, ServerConnection}
-import org.hyperscala.stream.{ByTag, Delta, HTMLParser}
+import org.hyperscala.stream._
 
 trait ServerScreen extends Screen with ExplicitHandler with Logging {
   lazy val streamable = HTMLParser(template)
@@ -21,7 +22,7 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
 
   def deltas(request: Request): List[Delta]
 
-  def title(): String = streamable.stream(Nil, Some(ByTag("title")), includeTag = false)
+  def title(): String = streamable.stream(Nil, Some(Selector.ByTag("title")), includeTag = false)
 
   def html(request: Request, partial: Boolean): String = {
     val selector = if (partial) {
@@ -39,7 +40,7 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
         val connection = appManager.createConnection(url)
         appManager.using(connection) {
           val input = s"""<input id="hyperscala-connection-id" type="hidden" value="${connection.id}"/>"""
-          deltas(request) ::: List(Delta.InsertFirstChild(ByTag("body"), input))
+          deltas(request) ::: List(Delta.InsertFirstChild(Selector.ByTag("body"), input))
         }
       }
       case _ => deltas(request)

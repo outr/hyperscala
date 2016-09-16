@@ -2,8 +2,8 @@ package example
 
 import java.io.File
 
+import org.hyperscala.delta.{Delta, Selector}
 import org.hyperscala.manager.ServerConnection
-import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
 import org.hyperscala.{PartialSupport, Request, ServerScreen}
 
 trait ServerDashboardScreen extends DashboardScreen with ServerScreen with PartialSupport with UserRequestValidator {
@@ -11,14 +11,14 @@ trait ServerDashboardScreen extends DashboardScreen with ServerScreen with Parti
 
   override def partialParentId: String = "content"
 
-  override def partialSelector: Selector = ById("example")
+  override def partialSelector: Selector = Selector.ById("example")
 
   override def deltas(request: Request): List[Delta] = {
 
 
     List(
-      Delta.ReplaceContent(ByTag("title"), "Modified Example Title"),
-      Delta.ReplaceContent(ById("list"), "")
+      Delta.ReplaceContent(Selector.ByTag("title"), "Modified Example Title"),
+      Delta.ReplaceContent(Selector.ById("list"), "")
       //    Delta.Repeat(ByClass("item"), data, (d: ItemData) => List(
       //      Delta.ReplaceContent(ByClass("itemName"), d.name),
       //      Delta.ReplaceContent(ByClass("itemValue"), d.value)
