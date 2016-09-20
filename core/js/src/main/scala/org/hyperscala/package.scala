@@ -61,4 +61,15 @@ package object hyperscala extends Logging {
       }
     }
   }
+
+  implicit def domListToIterator[T](list: DOMList[T]): Iterator[T] = new Iterator[T] {
+    private var position = -1
+
+    override def hasNext: Boolean = list.length > position + 1
+
+    override def next(): T = {
+      position += 1
+      list.item(position)
+    }
+  }
 }
