@@ -1,5 +1,6 @@
 package org.hyperscala.ajax
 
+import com.outr.scribe.Logging
 import org.scalajs.dom.XMLHttpRequest
 import org.scalajs.dom.raw.FormData
 import pl.metastack.metarx.{StateChannel, Var}
@@ -7,7 +8,7 @@ import pl.metastack.metarx.{StateChannel, Var}
 import scala.collection.immutable.Queue
 import scala.concurrent.Future
 
-class AjaxManager(val maxConcurrent: Int) {
+class AjaxManager(val maxConcurrent: Int) extends Logging {
   private var queue = Queue.empty[AjaxAction]
   private var running = Set.empty[AjaxAction]
 

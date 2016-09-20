@@ -18,5 +18,6 @@ class AjaxAction(request: AjaxRequest) {
       _state := ActionState.Finished
       manager.remove(this)
     }
+    request.send()
   }
 }
