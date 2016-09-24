@@ -4,8 +4,6 @@ import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
 
-trait BaseApplication {
-  protected[hyperscala] def add[T](pickler: Pickler[T]): Int
-
+trait BaseApplication extends Picklers {
   protected def register[T]: Channel[T] = macro BaseMacros.appPickler[T]
 }

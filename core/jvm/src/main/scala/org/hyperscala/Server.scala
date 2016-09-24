@@ -137,9 +137,21 @@ object Server extends Logging {
 
   def wrap(wrapper: (() => Unit) => Unit): Unit = this.wrapper = wrapper
 
-  def withServerSession(session: UndertowSession)(f: => Unit): Unit = request.scoped(Map.empty) {
+  def withServerSession[R](session: UndertowSession)(f: => R): R = request.scoped(Map.empty) {
+    val previous = request.get("serverSession")
     request("serverSession") = session
-    wrapper(() => f)
+    try {
+      var result: Option[R] = None
+      wrapper(() => {
+        result = Some(f)
+      })
+      result.get
+    } finally {
+      previous match {
+        case Some(s) => request("serverSession") = s
+        case None =>
+      }
+    }
   }
 
   def main(args: Array[String]): Unit = {

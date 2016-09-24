@@ -56,11 +56,14 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
   }
 
   def using[R](connection: Connection)(f: => R): R = {
+    val previous = currentConnection.get()
     currentConnection.set(Option(connection))
     try {
-      f
+      Server.withServerSession(connection.serverSession) {
+        f
+      }
     } finally {
-      currentConnection.remove()
+      currentConnection.set(previous)
     }
   }
 
@@ -98,7 +101,7 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
   var lastActive: Long = System.currentTimeMillis()
 
   var exchange: WebSocketHttpExchange = _
-  private val serverSession = Server.session.undertowSession
+  private[manager] val serverSession = Server.session.undertowSession
   private var backlog = List.empty[String]
   private var channel: WebSocketChannel = _
 
@@ -126,7 +129,7 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
     WebSockets.sendText(message, channel, None.orNull)
   }
 
-  override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = Server.withServerSession(serverSession) {
+  override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = manager.using(this) {
     val data = message.getData
     logger.debug(s"Received: $data")
     val index = data.indexOf(':')
@@ -135,9 +138,7 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
     } else {
       val id = data.substring(0, index).toInt
       val json = data.substring(index + 1)
-      manager.using(this) {
-        receive(id, json)
-      }
+      receive(id, json)
     }
   }
 
