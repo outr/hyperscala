@@ -1,6 +1,6 @@
 package org.hyperscala
 
-import scala.concurrent.forkjoin.ThreadLocalRandom
+import java.util.concurrent.ThreadLocalRandom
 
 object Unique {
   val LettersLower = "abcdefghijklmnopqrstuvwxyz"

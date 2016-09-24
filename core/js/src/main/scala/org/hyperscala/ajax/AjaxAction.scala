@@ -11,6 +11,7 @@ class AjaxAction(request: AjaxRequest) {
   def loaded: StateChannel[Int] = request.loaded
   def total: StateChannel[Int] = request.total
   def percentage: StateChannel[Int] = request.percentage
+  def cancelled: StateChannel[Boolean] = request.cancelled
 
   private[ajax] def start(manager: AjaxManager): Unit = {
     _state := ActionState.Running
@@ -20,4 +21,7 @@ class AjaxAction(request: AjaxRequest) {
     }
     request.send()
   }
+
+  // TODO: dequeue if not already running
+  def cancel(): Unit = request.cancel()     // TODO: does cancel fire onComplete with a failure?
 }

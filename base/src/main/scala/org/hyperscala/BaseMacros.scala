@@ -36,4 +36,19 @@ object BaseMacros {
        """
     )
   }
+
+  def communicationPickler[T](c: blackbox.Context)(implicit t: c.WeakTypeTag[T]): c.Expr[Channel[T]] = {
+    import c.universe._
+
+    val communication = q"${c.prefix.tree}"
+    c.Expr[Channel[T]](
+      q"""
+          val pickler = new org.hyperscala.Pickler[$t]($communication) {
+            override def read(json: String): $t = upickle.default.read[$t](json)
+            override def write(t: $t): String = upickle.default.write[$t](t)
+          }
+          pickler.channel
+       """
+    )
+  }
 }

@@ -45,11 +45,12 @@ class ThreadLocalStore extends MapStore {
   def clear(): Unit = threadLocal.remove()
 
   def scoped[R](map: Map[String, Any])(f: => R): R = {
+    val previous = threadLocal.get()
     threadLocal.set(map)
     try {
       f
     } finally {
-      clear()
+      threadLocal.set(previous)
     }
   }
 }

@@ -18,6 +18,7 @@ class AjaxRequest(url: String,
   val loaded: StateChannel[Int] = Var(0)
   val total: StateChannel[Int] = Var(0)
   val percentage: StateChannel[Int] = Var(0)
+  val cancelled: StateChannel[Boolean] = Var(false)
 
   req.onreadystatechange = { (e: dom.Event) =>
     if (req.readyState.toInt == 4) {
@@ -47,5 +48,10 @@ class AjaxRequest(url: String,
       req.send(data)
     }
     promise.future
+  }
+
+  def cancel(): Unit = if (percentage.get != 100) {
+    req.abort()
+    cancelled.asInstanceOf[Var[Boolean]] := true
   }
 }

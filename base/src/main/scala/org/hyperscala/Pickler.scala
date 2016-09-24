@@ -2,7 +2,7 @@ package org.hyperscala
 
 import pl.metastack.metarx.Channel
 
-abstract class Pickler[T](app: BaseApplication) {
+abstract class Pickler[T](app: Picklers) {
   private val receiving = new ThreadLocal[Option[T]] {
     override def initialValue(): Option[T] = None
   }
