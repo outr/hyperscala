@@ -3,6 +3,7 @@ package org.hyperscala.stream
 import java.io.{File, FileInputStream, InputStream}
 
 import com.outr.scribe.Logging
+import org.hyperscala.delta.{Delta, Selector}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -35,9 +36,9 @@ object HTMLParser {
     val streamable = apply(file)
 
     val deltas = List(
-      Delta.ReplaceContent(ByTag("title"), "Modified Title"),
-      Delta.ReplaceContent(ById("list"), ""),
-      Delta.Grouped(ByClass("type1"),
+      Delta.ReplaceContent(Selector.ByTag("title"), "Modified Title"),
+      Delta.ReplaceContent(Selector.ById("list"), ""),
+      /*Delta.Grouped(ByClass("type1"),
         Delta.Template(ByClass("type2"), List(
           Delta.ReplaceContent(ByClass("heading"), "Modified Type 2 Heading"),
           Delta.ReplaceContent(ByClass("body"), "Modified Type 2 Body")
@@ -54,8 +55,8 @@ object HTMLParser {
           Delta.ReplaceContent(ByClass("heading"), "Modified Type 2 Heading B"),
           Delta.ReplaceContent(ByClass("body"), "Modified Type 2 Body B")
         ))
-      ),
-      Delta.ReplaceAttribute(ById("googleLink"), "href", "http://google.com")
+      ),*/
+      Delta.ReplaceAttribute(Selector.ById("googleLink"), "href", "http://google.com")
     )
     val html = streamable.stream(deltas)
     println(html)
@@ -74,17 +75,17 @@ object HTMLParser {
     )
 
     val deltas = List(
-      Delta.ReplaceContent(ByTag("title"), "Modified Title"),
-      Delta.Replace(ById("head"), "<h1>Heading</h1>"),
-      Delta.InsertLastChild(ById("body"), "<b>Last Entry</b>"),
-      Delta.InsertAfter(ById("footer"), "<h5>Copyright (c)</h5>"),
-      Delta.ReplaceContent(ById("footer"), "The updated footer"),
-      Delta.Repeat(ByClass("item"), data, (d: ItemData) => List(
+      Delta.ReplaceContent(Selector.ByTag("title"), "Modified Title"),
+      Delta.Replace(Selector.ById("head"), "<h1>Heading</h1>"),
+      Delta.InsertLastChild(Selector.ById("body"), "<b>Last Entry</b>"),
+      Delta.InsertAfter(Selector.ById("footer"), "<h5>Copyright (c)</h5>"),
+      Delta.ReplaceContent(Selector.ById("footer"), "The updated footer")
+      /*Delta.Repeat(ByClass("item"), data, (d: ItemData) => List(
         Delta.ReplaceContent(ByClass("itemName"), d.name),
         Delta.ReplaceContent(ByClass("itemValue"), d.value)
-      ))
+      ))*/
     )
-    val html = streamable.stream(deltas, Some(ById("body")))
+    val html = streamable.stream(deltas, Some(Selector.ById("body")))
     println(html)
   }
 

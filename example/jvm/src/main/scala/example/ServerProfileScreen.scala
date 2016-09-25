@@ -2,8 +2,8 @@ package example
 
 import java.io.File
 
+import org.hyperscala.delta.{Delta, Selector}
 import org.hyperscala.manager.ServerConnection
-import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
 import org.hyperscala.{PartialSupport, Request, ServerScreen}
 
 trait ServerProfileScreen extends ProfileScreen with ServerScreen with PartialSupport with UserRequestValidator {
@@ -11,7 +11,7 @@ trait ServerProfileScreen extends ProfileScreen with ServerScreen with PartialSu
 
   override def partialParentId: String = "content"
 
-  override def partialSelector: Selector = ById("profile")
+  override def partialSelector: Selector = Selector.ById("profile")
 
   override def deltas(request: Request): List[Delta] = Nil
 

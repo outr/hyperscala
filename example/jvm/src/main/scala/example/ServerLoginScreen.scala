@@ -3,7 +3,7 @@ package example
 import java.io.File
 
 import io.undertow.server.HttpServerExchange
-import org.hyperscala.stream.{ById, ByTag, Delta, Selector}
+import org.hyperscala.delta.{Delta, Selector}
 import org.hyperscala.{PartialSupport, Request, RequestValidator, ServerScreen, ValidationResult}
 
 trait ServerLoginScreen extends LoginScreen with ServerScreen with PartialSupport with RequestValidator {
@@ -21,9 +21,9 @@ trait ServerLoginScreen extends LoginScreen with ServerScreen with PartialSuppor
 
   override def template: File = new File("src/main/web/login.html")
   override def partialParentId: String = "content"
-  override def partialSelector: Selector = ById("loginForm")
+  override def partialSelector: Selector = Selector.ById("loginForm")
   override def deltas(request: Request): List[Delta] = List(
-    Delta.ReplaceContent(ByTag("title"), "Modified Login Title")
+    Delta.ReplaceContent(Selector.ByTag("title"), "Modified Login Title")
   )
 
   override def validate(exchange: HttpServerExchange): ValidationResult = {

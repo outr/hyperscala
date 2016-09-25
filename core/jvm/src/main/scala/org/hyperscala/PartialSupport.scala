@@ -1,6 +1,6 @@
 package org.hyperscala
 
-import org.hyperscala.stream.Selector
+import org.hyperscala.delta.Selector
 
 trait PartialSupport {
   this: ServerScreen =>
