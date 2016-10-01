@@ -86,7 +86,7 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       if (connection.url.get != evt.url) {
         connection.url := evt.url
       }
-      val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName}."))
+      val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName} (${app.screens.map(_.screenName).mkString(", ")})."))
       val serverScreen = screen.asInstanceOf[ServerScreen]
       val title = serverScreen.title()
       val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
