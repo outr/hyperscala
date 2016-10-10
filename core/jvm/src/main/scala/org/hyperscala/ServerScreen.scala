@@ -9,7 +9,7 @@ import io.undertow.websockets.spi.WebSocketHttpExchange
 import org.hyperscala.manager.{ServerApplicationManager, ServerConnection}
 import org.hyperscala.stream.{ByTag, Delta, HTMLParser}
 
-trait ServerScreen extends Screen with ExplicitHandler with Logging {
+trait ServerScreen extends Screen with Handler with Logging {
   lazy val streamable = HTMLParser(template)
 
   protected def establishConnection: Boolean = true
@@ -47,7 +47,7 @@ trait ServerScreen extends Screen with ExplicitHandler with Logging {
     streamable.stream(d, selector)
   }
 
-  override def handleRequest(exchange: HttpServerExchange): Unit = {
+  override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = {
     val partial = Option(exchange.getQueryParameters.get("partial")).exists(_.contains("true"))
     val html = this.html(Request(Left(exchange)), partial)
     exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, html.length)

@@ -11,7 +11,7 @@ trait Screen extends BaseScreen with Logging {
     *
     * Defaults to Screen.Priority.Normal
     */
-  def priority: Int = Screen.Priority.Normal
+  def priority: Priority = Priority.Normal
 
   def app: WebApplication
 
@@ -23,11 +23,25 @@ trait Screen extends BaseScreen with Logging {
   app.screensByName += screenName -> this
 }
 
-object Screen {
-  object Priority {
-    val Critical = 1
-    val High = 50
-    val Normal = 100
-    val Low = 200
+object Priority {
+  private var nameMap = Map.empty[String, Priority]
+
+  val Lowest = Priority(0, "lowest")
+  val Low = Priority(100, "low")
+  val Normal = Priority(1000, "normal")
+  val High = Priority(10000, "high")
+  val Critical = Priority(10000, "critical")
+
+  def get(name: String): Option[Priority] = nameMap.get(name)
+}
+
+case class Priority(value: Int, name: String) extends Ordered[Priority] {
+  Priority.synchronized {
+    Priority.nameMap += name -> this
   }
+
+  def lower(name: String): Priority = Priority(value - 1, name)
+  def higher(name: String): Priority = Priority(value + 1, name)
+
+  override def compare(that: Priority): Int = that.value.compareTo(value)
 }

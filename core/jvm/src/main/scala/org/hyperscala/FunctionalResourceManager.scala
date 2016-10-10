@@ -5,6 +5,7 @@ import java.util
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
+import com.outr.scribe.Logging
 import io.undertow.io.IoCallback
 import io.undertow.server.handlers.ResponseCodeHandler
 import io.undertow.server.handlers.cache.ResponseCache
@@ -160,8 +161,14 @@ trait PathResourceMapping extends ResourceMapping {
   }
 }
 
-class FunctionalResourceHandler(resourceManager: FunctionalResourceManager) extends ResourceHandler(resourceManager) {
+class FunctionalResourceHandler(resourceManager: FunctionalResourceManager) extends ResourceHandler(resourceManager) with Handler with Logging {
   setDirectoryListingEnabled(false)
+
+  override def isURLMatch(url: URL): Boolean = resourceManager.lookup(url).nonEmpty
+
+  override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = handleRequest(exchange)
+
+  override def priority: Priority = Priority.Low
 
   override def handleRequest(exchange: HttpServerExchange): Unit = exchange.getRequestMethod match {
     case Methods.GET | Methods.POST => serveResource(exchange, sendContent = true)

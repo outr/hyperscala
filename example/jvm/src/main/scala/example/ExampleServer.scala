@@ -11,7 +11,18 @@ object ExampleServer {
 
   def main(args: Array[String]): Unit = {
     server.resourceManager.classPath("html")()
-    server.resourceManager.file(new File("src/main/web/"))()
+    server.resourceManager.file(new File("src/main/web/")) { url =>
+      if (url.path.endsWith(".html")) {
+        None
+      } else {
+        val file = new File("src/main/web/", url.path)
+        if (file.exists()) {
+          Some(FileResourceInfo(file))
+        } else {
+          None
+        }
+      }
+    }
     server.resourceManager.file(new File("src/main/web/")) { url =>
       if (url.path == "/download.txt") {
         Some(FileResourceInfo("/test.txt", "mydownload.txt"))

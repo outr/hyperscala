@@ -7,23 +7,32 @@ import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.{Handlers, Undertow}
 
+import scala.collection.immutable.SortedSet
 import scala.language.experimental.macros
 import scala.language.implicitConversions
+import scala.util.matching.Regex
 
 class Server(host: String, port: Int, sessionDomain: Option[String] = None) extends Logging {
   private val handler = new ServerHandler
   private var instance: Option[Undertow] = None
-  private val mappedPathHandler = new MappedPathHandler
+  private var handlers = List.empty[Handler]
   private val sessionManager = new io.undertow.server.session.InMemorySessionManager("ServerSessionManager")
   private val sessionConfig = new SessionCookieConfig
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
     setNext(handler)
   }
   val resourceManager = new FunctionalResourceManager(this)
+  private val resourceHandler = new FunctionalResourceHandler(resourceManager)
+  register(resourceHandler)
 
-  private var defaultHandler: Option[PathHandler] = None
-  var errorHandler: HttpHandler = new HttpHandler {
-    override def handleRequest(exchange: HttpServerExchange): Unit = {
+//  private var defaultHandler: Option[PathHandler] = None
+  var errorHandler: Handler = new Handler {
+    override def isURLMatch(url: URL): Boolean = false
+
+    override def priority: Priority = Priority.Normal
+
+    override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = {
+      logger.info("Error Handler!")
       val errorPage =
         s"""<html>
            |<head>
@@ -40,7 +49,6 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
   }
 
   def start(): Unit = synchronized {
-    defaultHandler = Some(HttpPathHandler(new FunctionalResourceHandler(resourceManager)))
     val server = Undertow.builder()
       .addHttpListener(port, host)
       .setHandler(sessionAttachmentHandler)
@@ -61,26 +69,30 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
     }
   }
 
-  def register(handler: PathHandler, paths: String*): Unit = {
-    logger.info(s"Registering ${paths.mkString(", ")}")
-    paths.foreach { path =>
-      mappedPathHandler.register(path, handler)
-    }
+  def register(handler: Handler): Unit = synchronized {
+    handlers = (handler :: handlers).sorted
   }
 
-  def register(explicitHandler: ExplicitHandler): Unit = mappedPathHandler.register(explicitHandler)
+  def register(handler: HttpHandler, paths: String*): Unit = {
+    logger.info(s"Registering ${paths.mkString(", ")}")
+    register(Handler.path(paths.toSet, handler))
+  }
 
   def register(path: String, contentType: String, f: HttpServerExchange => String): Unit = {
-    val handler = new HttpPathHandler {
-      override def handleRequest(exchange: HttpServerExchange): Unit = {
+    val handler = new Handler {
+      def isURLMatch(url: URL): Boolean = url.path == path
+
+      override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = {
         val content = f(exchange)
         exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, content.length)
         exchange.getResponseHeaders.put(Headers.CONTENT_TYPE, contentType)
         val sender = exchange.getResponseSender
         sender.send(content)
       }
+
+      override def priority: Priority = Priority.Normal
     }
-    register(handler, path)
+    register(handler)
   }
 
   class ServerHandler extends HttpHandler {
@@ -91,18 +103,16 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
     override def handleRequest(exchange: HttpServerExchange): Unit = {
       exchange.putAttachment(SessionConfig.ATTACHMENT_KEY, sessionConfig)
       Server.withServerSession(Sessions.getOrCreateSession(exchange)) {
-        exchange.addDefaultResponseListener(new DefaultResponseListener {
-          override def handleDefaultResponse(exchange: HttpServerExchange): Boolean = if (exchange.getStatusCode >= 400) {
-            errorSupport(errorHandler.handleRequest(exchange))
-            true
-          } else {
-            false
-          }
-        })
         errorSupport {
-          val handler = mappedPathHandler.lookup(exchange.url).orElse(defaultHandler)
-          logger.debug(s"Looking up path: ${exchange.getRequestPath}, handler: $handler")
-          handler.foreach(_.handleRequest(exchange))
+          val url = exchange.url
+          val handler = handlers.find(h => h.isURLMatch(url))
+          handler match {
+            case Some(h) => h.handleRequest(url, exchange)
+            case None => {
+              exchange.setStatusCode(404)
+              errorHandler.handleRequest(url, exchange)
+            }
+          }
         }
       }
     }
@@ -167,7 +177,7 @@ object Server extends Logging {
 
     // Create WebSocket communication handler
     val webSocketCallback = app.appManager.asInstanceOf[WebSocketConnectionCallback]
-    server.register(HttpPathHandler(Handlers.websocket(webSocketCallback)), app.communicationPath)
+    server.register(Handlers.websocket(webSocketCallback), app.communicationPath)
 
     // Register screens
     app.screens.foreach {
@@ -181,79 +191,52 @@ object Server extends Logging {
   }
 }
 
-trait PathHandler extends HttpHandler {
-  def handleRequest(exchange: HttpServerExchange): Unit
-}
-
-trait ExplicitHandler extends PathHandler {
+trait Handler extends Ordered[Handler] {
+  /**
+    * Returns true if this URL should be handled by this Handler. The handleRequest method will be invoked following
+    * a true response.
+    *
+    * @param url the current URL being handled
+    * @return true if this handler is equipped to handle it
+    */
   def isURLMatch(url: URL): Boolean
+
+  /**
+    * Handles the exchange.
+    *
+    * @param url the current URL
+    * @param exchange the HTTP request
+    */
+  def handleRequest(url: URL, exchange: HttpServerExchange): Unit
+
+  /**
+    * The priority of this handler. A higher priority will be considered before lower priority.
+    */
+  def priority: Priority
+
+  override def compare(that: Handler): Int = priority.compare(that.priority)
 }
 
-trait HttpPathHandler extends HttpHandler with PathHandler
+object Handler {
+  def path(paths: Set[String], handler: HttpHandler, priority: Priority = Priority.Normal): Handler = {
+    val p = priority
+    new Handler {
+      def isURLMatch(url: URL): Boolean = paths.contains(url.path)
 
-object HttpPathHandler {
-  def apply(handler: HttpHandler): HttpPathHandler = new HttpPathHandler {
-    override def handleRequest(exchange: HttpServerExchange): Unit = handler.handleRequest(exchange)
-  }
-}
+      override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = handler.handleRequest(exchange)
 
-class MappedPathHandler extends PathHandler {
-  protected var explicitHandlers = Set.empty[ExplicitHandler]
-  protected var paths = Map.empty[String, PathHandler]
-
-  def register(explicitHandler: ExplicitHandler): Unit = synchronized {
-    explicitHandlers += explicitHandler
-  }
-
-  def register(path: String, handler: PathHandler): Unit = synchronized {
-    if (path.indexOf('*') != -1) {
-      val parts = path.split("[/]").toList
-      registerRecursive(parts, handler)
-    } else {
-      paths += path -> handler
+      override def priority: Priority = p
     }
   }
 
-  protected def registerRecursive(parts: List[String], handler: PathHandler): Unit = {
-    val head = parts.head
-    if (parts.tail.isEmpty) {
-      handler match {
-        case explicit: ExplicitHandler => explicitHandlers += explicit
-        case _ => paths += head -> handler
-      }
-    } else if (head == "**") {
-      paths += head -> this       // ** recurses back on itself
-      registerRecursive(parts.tail, handler)
-    } else {
-      val mappedHandler = paths.getOrElse(head, new MappedPathHandler).asInstanceOf[MappedPathHandler]
-      paths += head -> mappedHandler
-      mappedHandler.registerRecursive(parts.tail, handler)
-    }
-  }
+  def apply(handler: HttpHandler, priority: Priority = Priority.Normal): Handler = {
+    val p = priority
+    new Handler {
+      def isURLMatch(url: URL): Boolean = true
 
-  def handleRequest(exchange: HttpServerExchange): Unit = {
-    throw new RuntimeException("MappedPathHandler is not a valid request handler")
-  }
+      override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = handler.handleRequest(exchange)
 
-  def lookup(url: URL): Option[PathHandler] = {
-    explicitHandlers.find(_.isURLMatch(url)).orElse(paths.get(url.path).orElse(lookup(url, url.path.split("[/]").toList)))
-  }
-
-  def lookup(url: URL, path: List[String]): Option[PathHandler] = if (path.isEmpty) {
-    explicitHandlers.find(_.isURLMatch(url))
-  } else {
-    explicitHandlers.find(_.isURLMatch(url))
-      .orElse(lookupRecursive(url, path.head, path.tail))
-      .orElse(lookupRecursive(url, "*", path.tail))
-      .orElse(lookupRecursive(url, "**", path.tail))
-  }
-
-  private def lookupRecursive(url: URL, head: String, tail: List[String]): Option[PathHandler] = paths.get(head) match {
-    case None => None
-    case Some(handler) => handler match {
-      case h: MappedPathHandler => h.lookup(url, tail)
-      case _ if tail.isEmpty => Some(handler)
-      case _ => None
+      override def priority: Priority = p
     }
   }
 }
