@@ -2,15 +2,13 @@ package org.hyperscala
 
 import com.outr.scribe.Logging
 import io.undertow.server.session.{SessionAttachmentHandler, SessionConfig, SessionCookieConfig, Session => UndertowSession}
-import io.undertow.server.{DefaultResponseListener, HttpHandler, HttpServerExchange}
+import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
-import io.undertow.{Handlers, Undertow}
+import io.undertow.{Handlers, Undertow, UndertowOptions}
 
-import scala.collection.immutable.SortedSet
 import scala.language.experimental.macros
 import scala.language.implicitConversions
-import scala.util.matching.Regex
 
 class Server(host: String, port: Int, sessionDomain: Option[String] = None) extends Logging {
   private val handler = new ServerHandler
@@ -25,7 +23,6 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
   private val resourceHandler = new FunctionalResourceHandler(resourceManager)
   register(resourceHandler)
 
-//  private var defaultHandler: Option[PathHandler] = None
   var errorHandler: Handler = new Handler {
     override def isURLMatch(url: URL): Boolean = false
 
@@ -50,6 +47,7 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
 
   def start(): Unit = synchronized {
     val server = Undertow.builder()
+      .setServerOption(UndertowOptions.ENABLE_HTTP2, java.lang.Boolean.TRUE)
       .addHttpListener(port, host)
       .setHandler(sessionAttachmentHandler)
       .build()
@@ -188,55 +186,5 @@ object Server extends Logging {
     app.init()
 
     server
-  }
-}
-
-trait Handler extends Ordered[Handler] {
-  /**
-    * Returns true if this URL should be handled by this Handler. The handleRequest method will be invoked following
-    * a true response.
-    *
-    * @param url the current URL being handled
-    * @return true if this handler is equipped to handle it
-    */
-  def isURLMatch(url: URL): Boolean
-
-  /**
-    * Handles the exchange.
-    *
-    * @param url the current URL
-    * @param exchange the HTTP request
-    */
-  def handleRequest(url: URL, exchange: HttpServerExchange): Unit
-
-  /**
-    * The priority of this handler. A higher priority will be considered before lower priority.
-    */
-  def priority: Priority
-
-  override def compare(that: Handler): Int = priority.compare(that.priority)
-}
-
-object Handler {
-  def path(paths: Set[String], handler: HttpHandler, priority: Priority = Priority.Normal): Handler = {
-    val p = priority
-    new Handler {
-      def isURLMatch(url: URL): Boolean = paths.contains(url.path)
-
-      override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = handler.handleRequest(exchange)
-
-      override def priority: Priority = p
-    }
-  }
-
-  def apply(handler: HttpHandler, priority: Priority = Priority.Normal): Handler = {
-    val p = priority
-    new Handler {
-      def isURLMatch(url: URL): Boolean = true
-
-      override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = handler.handleRequest(exchange)
-
-      override def priority: Priority = p
-    }
   }
 }
