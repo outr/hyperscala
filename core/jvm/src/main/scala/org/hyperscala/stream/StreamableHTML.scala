@@ -41,7 +41,11 @@ class StreamableHTML(file: File, cacheBuilder: CacheBuilder) extends Logging {
         val tags = delta.selector.lookup(this)
         tags.foreach { tag =>
           if (tag.start >= start.getOrElse(0) && tag.close.map(_.end).getOrElse(tag.end) <= end) {
-            delta(streamer, tag)
+            try {
+              delta(streamer, tag)
+            } catch {
+              case t: Throwable => throw new RuntimeException(s"Error processing Delta: $delta for tag: $tag.", t)
+            }
           } else {
             logger.debug(s"Excluding $tag")
           }

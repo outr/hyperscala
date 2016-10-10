@@ -41,10 +41,6 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
 
   def start(): Unit = synchronized {
     defaultHandler = Some(HttpPathHandler(new FunctionalResourceHandler(resourceManager)))
-//    if (resourceManagers.nonEmpty) {
-//      defaultHandler = Some(HttpPathHandler(Handlers.resource(new MultiResourceManager(resourceManagers.reverse: _*))))
-//
-//    }
     val server = Undertow.builder()
       .addHttpListener(port, host)
       .setHandler(sessionAttachmentHandler)
