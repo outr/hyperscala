@@ -10,8 +10,18 @@ class HandlerBuilder(matcher: PartialFunction[URL, Boolean] = Map.empty,
     val m = this.matcher.orElse(matcher)
     new HandlerBuilder(m, handler, priority)
   }
-  def pathMatch(path: String): HandlerBuilder = withMatcher({ case url if url.path == path => true })
-  def hostMatch(host: String): HandlerBuilder = withMatcher({ case url if url.host.equalsIgnoreCase(host) => true })
+  def pathMatch(path: String, regex: Boolean = false): HandlerBuilder = if (regex) {
+    withMatcher({ case url if url.path.matches(path) => true })
+  } else {
+    withMatcher({ case url if url.path == path => true })
+  }
+  def hostMatch(host: String, regex: Boolean = false): HandlerBuilder = if (regex) {
+    withMatcher({ case url if url.host.matches(host) => true })
+  } else {
+    withMatcher({ case url if url.host.equalsIgnoreCase(host) => true })
+  }
+  def urlMatch(url: URL): HandlerBuilder = withMatcher({ case u if u == url => true })
+  def urlRegexMatch(regex: String): HandlerBuilder = withMatcher({ case url if url.toString.matches(regex) => true })
 
   def withHandler(handler: HttpHandler): HandlerBuilder = {
     val h = (url: URL, exchange: HttpServerExchange) => handler.handleRequest(exchange)
