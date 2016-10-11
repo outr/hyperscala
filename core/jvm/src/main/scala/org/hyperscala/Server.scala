@@ -78,6 +78,10 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None, sess
     register(handler)
   }
 
+  def unregister(handler: Handler): Unit = synchronized {
+    handlers = handlers.filterNot(_ eq handler)
+  }
+
   override def handleRequest(exchange: HttpServerExchange): Unit = {
     exchange.putAttachment(SessionConfig.ATTACHMENT_KEY, sessionCookieConfig)
     Server.withServerSession(Sessions.getOrCreateSession(exchange)) {
