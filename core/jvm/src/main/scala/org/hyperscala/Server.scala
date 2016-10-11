@@ -6,12 +6,34 @@ import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.{Handlers, Undertow, UndertowOptions}
+import pl.metastack.metarx.Sub
 
 import scala.concurrent.duration._
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 
-class Server(host: String, port: Int, sessionDomain: Option[String] = None, sessionMaxAge: FiniteDuration = 0.seconds) extends Logging with HttpHandler {
+class Server extends Logging with HttpHandler {
+  object config {
+    val autoRestart: Sub[Boolean] = sub(true)
+    val host: Sub[String] = sub("0.0.0.0")
+    val port: Sub[Int] = sub(8080)
+
+    object session {
+      val domain: Sub[Option[String]] = sub(None)
+      val maxAge: Sub[FiniteDuration] = sub(0.seconds)
+    }
+
+    private def sub[T](value: T): Sub[T] = {
+      val s = Sub[T](value)
+      s.silentAttach { value =>
+        if (autoRestart.get) {
+          restart()
+        }
+      }
+      s
+    }
+  }
+
   private var instance: Option[Undertow] = None
   private var handlers = List.empty[Handler]
   private val sessionManager = new io.undertow.server.session.InMemorySessionManager("ServerSessionManager")
@@ -20,8 +42,8 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None, sess
     setNext(Server.this)
   }
   private val sessionCookieConfig = new SessionCookieConfig {
-    sessionDomain.foreach(setDomain)
-    setMaxAge(sessionMaxAge.toSeconds.toInt)
+    config.session.domain.get.foreach(setDomain)
+    setMaxAge(config.session.maxAge.get.toSeconds.toInt)
   }
   val resourceManager = new FunctionalResourceManager(this)
   private val resourceHandler = new FunctionalResourceHandler(resourceManager)
@@ -32,13 +54,15 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None, sess
   def start(): Unit = synchronized {
     val server = Undertow.builder()
       .setServerOption(UndertowOptions.ENABLE_HTTP2, java.lang.Boolean.TRUE)
-      .addHttpListener(port, host)
+      .addHttpListener(config.port.get, config.host.get)
       .setHandler(sessionAttachmentHandler)
       .build()
     server.start()
     instance = Some(server)
-    logger.info(s"Server started on $host:$port...")
+    logger.info(s"Server started on ${config.host.get}:${config.port.get}...")
   }
+
+  def isStarted: Boolean = instance.nonEmpty
 
   def stop(): Unit = synchronized {
     instance match {
@@ -49,6 +73,11 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None, sess
       }
       case None => // Not started
     }
+  }
+
+  def restart(): Unit = synchronized {
+    stop()
+    start()
   }
 
   def register(handler: Handler): Handler = synchronized {
@@ -142,7 +171,9 @@ object Server extends Logging {
   }
 
   def main(args: Array[String]): Unit = {
-    val server = new Server("localhost", 8080)
+    val server = new Server
+    server.config.host := "localhost"
+    server.config.port := 8080
     server.register("/", "text/html", (hse: HttpServerExchange) => {
       "<html><head><title>Root</title></head><body>This is the root</body></html>"
     })
@@ -150,9 +181,9 @@ object Server extends Logging {
     server.start()
   }
 
-  def apply(app: WebApplication, host: String, port: Int, sessionDomain: Option[String] = None): Server = {
+  def apply(app: WebApplication): Server = {
     // Instantiate Server
-    val server = new Server(host, port, sessionDomain) {
+    val server = new Server {
       override def error(t: Throwable): Unit = app.error(t)
     }
 
