@@ -85,28 +85,6 @@ class Server extends Logging with HttpHandler {
     handler
   }
 
-  def register(handler: HttpHandler, paths: String*): Handler = {
-    logger.info(s"Registering ${paths.mkString(", ")}")
-    register(Handler.path(paths.toSet, handler))
-  }
-
-  def register(path: String, contentType: String, f: HttpServerExchange => String): Handler = {
-    val handler = new Handler {
-      def isURLMatch(url: URL): Boolean = url.path == path
-
-      override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = {
-        val content = f(exchange)
-        exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, content.length)
-        exchange.getResponseHeaders.put(Headers.CONTENT_TYPE, contentType)
-        val sender = exchange.getResponseSender
-        sender.send(content)
-      }
-
-      override def priority: Priority = Priority.Normal
-    }
-    register(handler)
-  }
-
   def unregister(handler: Handler): Unit = synchronized {
     handlers = handlers.filterNot(_ eq handler)
   }
@@ -170,17 +148,6 @@ object Server extends Logging {
     }
   }
 
-  def main(args: Array[String]): Unit = {
-    val server = new Server
-    server.config.host := "localhost"
-    server.config.port := 8080
-    server.register("/", "text/html", (hse: HttpServerExchange) => {
-      "<html><head><title>Root</title></head><body>This is the root</body></html>"
-    })
-    server.register("/test/**/wildcard.txt", "text/plain", (hse: HttpServerExchange) => "Wildcard!")
-    server.start()
-  }
-
   def apply(app: WebApplication): Server = {
     // Instantiate Server
     val server = new Server {
@@ -189,7 +156,7 @@ object Server extends Logging {
 
     // Create WebSocket communication handler
     val webSocketCallback = app.appManager.asInstanceOf[WebSocketConnectionCallback]
-    server.register(Handlers.websocket(webSocketCallback), app.communicationPath)
+    Handler.pathMatch(app.communicationPath).withHandler(Handlers.websocket(webSocketCallback)).register(server)
 
     // Register screens
     app.screens.foreach {

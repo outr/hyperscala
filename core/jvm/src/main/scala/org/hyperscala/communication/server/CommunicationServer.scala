@@ -53,10 +53,6 @@ class CommunicationServer(path: String,
     }
   }
 
-  def register(server: Server): Unit = {
-    server.register(Handlers.websocket(this), path)
-  }
-
   override def onConnect(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = synchronized {
     val authorized = authorization(exchange) match {
       case Some(auth) => exchange.getRequestHeader(Headers.AUTHORIZATION_STRING) == auth
