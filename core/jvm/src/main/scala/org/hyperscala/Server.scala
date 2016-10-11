@@ -26,7 +26,7 @@ class Server extends Logging with HttpHandler {
     private def sub[T](value: T): Sub[T] = {
       val s = Sub[T](value)
       s.silentAttach { value =>
-        if (autoRestart.get) {
+        if (autoRestart.get && isStarted) {
           restart()
         }
       }
@@ -57,7 +57,11 @@ class Server extends Logging with HttpHandler {
       .addHttpListener(config.port.get, config.host.get)
       .setHandler(sessionAttachmentHandler)
       .build()
-    server.start()
+    try {
+      server.start()
+    } catch {
+      case t: Throwable => throw new RuntimeException(s"Failed to start server at ${config.host.get}:${config.port.get}.", t)
+    }
     instance = Some(server)
     logger.info(s"Server started on ${config.host.get}:${config.port.get}...")
   }

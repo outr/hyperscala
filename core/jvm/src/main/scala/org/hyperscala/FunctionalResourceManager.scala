@@ -47,10 +47,10 @@ class FunctionalResourceManager(val server: Server) extends ResourceManager {
 
   def lookup(url: URL): Option[ResourceResult] = _mappings.toStream.flatMap(_.lookup(url)).headOption
 
-  def file(directory: File)(conversion: URL => Option[FileResourceInfo] = defaultFileConversion(directory)): Unit = {
+  def file(directory: File, addNow: Boolean = true)(conversion: URL => Option[FileResourceInfo] = defaultFileConversion(directory)): ResourceMapping = {
     val canonicalBase = directory.getCanonicalPath
 
-    FunctionalResourceManager.this += new PathResourceMapping {
+    val resourceMapping = new PathResourceMapping {
       override def base: String = canonicalBase
 
       override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap { info =>
@@ -65,15 +65,19 @@ class FunctionalResourceManager(val server: Server) extends ResourceManager {
         }
       }
     }
+    if (addNow) {
+      add(resourceMapping)
+    }
+    resourceMapping
   }
-  def classPath(basePath: String)(conversion: URL => Option[ClassPathResourceInfo] = defaultURLConversion): Unit = {
+  def classPath(basePath: String, addNow: Boolean = true)(conversion: URL => Option[ClassPathResourceInfo] = defaultURLConversion): ResourceMapping = {
     val properBase = if (basePath.endsWith("/")) {
       basePath.substring(1)
     } else {
       basePath
     }
 
-    FunctionalResourceManager.this += new ClassPathResourceMapping {
+    val resourceMapping = new ClassPathResourceMapping {
       override def base: String = properBase
 
       override def lookup(url: URL): Option[ResourceResult] = conversion(url).flatMap {
@@ -81,10 +85,19 @@ class FunctionalResourceManager(val server: Server) extends ResourceManager {
         case PathClassPathResourceInfo(path, attachment) => Option(getClass.getClassLoader.getResource(s"$base$path"))
       }.map(u => ResourceResult(new URLResource(u, u.openConnection(), u.toString)))
     }
+    if (addNow) {
+      add(resourceMapping)
+    }
+    resourceMapping
   }
 
-  def +=(mapping: ResourceMapping): Unit = synchronized {
+  def add(mapping: ResourceMapping): ResourceMapping = synchronized {
     _mappings += mapping
+    mapping
+  }
+
+  def remove(mapping: ResourceMapping): Unit = synchronized {
+    _mappings -= mapping
   }
 
   override def close(): Unit = {}
