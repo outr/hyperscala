@@ -6,7 +6,7 @@ import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage, StreamSourceFrameChannel, WebSocketChannel, WebSockets}
 import io.undertow.websockets.spi.WebSocketHttpExchange
 import org.hyperscala.communication.Communication
-import org.hyperscala.Server
+import org.hyperscala.{Handler, Server}
 import pl.metastack.metarx.Channel
 
 class CommunicationServer(path: String,
@@ -51,6 +51,10 @@ class CommunicationServer(path: String,
         send := message
       }
     }
+  }
+
+  def register(server: Server): Unit = {
+    Handler.pathMatch(path).withHandler(Handlers.websocket(this)).register(server)
   }
 
   override def onConnect(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = synchronized {
