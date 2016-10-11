@@ -40,10 +40,10 @@ object Handler {
     }
   }
 
-  def apply(handler: HttpHandler, priority: Priority = Priority.Normal): Handler = {
+  def apply(handler: HttpHandler, priority: Priority = Priority.Normal, matcher: URL => Boolean = url => true): Handler = {
     val p = priority
     new Handler {
-      def isURLMatch(url: URL): Boolean = true
+      def isURLMatch(url: URL): Boolean = matcher(url)
 
       override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = handler.handleRequest(exchange)
 

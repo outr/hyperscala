@@ -7,43 +7,27 @@ import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.{Handlers, Undertow, UndertowOptions}
 
+import scala.concurrent.duration._
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 
-class Server(host: String, port: Int, sessionDomain: Option[String] = None) extends Logging {
-  private val handler = new ServerHandler
+class Server(host: String, port: Int, sessionDomain: Option[String] = None, sessionMaxAge: FiniteDuration = 0.seconds) extends Logging with HttpHandler {
   private var instance: Option[Undertow] = None
   private var handlers = List.empty[Handler]
   private val sessionManager = new io.undertow.server.session.InMemorySessionManager("ServerSessionManager")
   private val sessionConfig = new SessionCookieConfig
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
-    setNext(handler)
+    setNext(Server.this)
+  }
+  private val sessionCookieConfig = new SessionCookieConfig {
+    sessionDomain.foreach(setDomain)
+    setMaxAge(sessionMaxAge.toSeconds.toInt)
   }
   val resourceManager = new FunctionalResourceManager(this)
   private val resourceHandler = new FunctionalResourceHandler(resourceManager)
   register(resourceHandler)
 
-  var errorHandler: Handler = new Handler {
-    override def isURLMatch(url: URL): Boolean = false
-
-    override def priority: Priority = Priority.Normal
-
-    override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = {
-      logger.info("Error Handler!")
-      val errorPage =
-        s"""<html>
-           |<head>
-           |  <title>Error</title>
-           |</head>
-           |<body>
-           |  ${exchange.getStatusCode} - ${StatusCodes.getReason(exchange.getStatusCode)}
-           |</body>
-           |</html>""".stripMargin
-      exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, errorPage.length)
-      exchange.getResponseHeaders.put(Headers.CONTENT_TYPE, "text/html")
-      exchange.getResponseSender.send(errorPage)
-    }
-  }
+  var errorHandler: Handler = DefaultErrorHandler
 
   def start(): Unit = synchronized {
     val server = Undertow.builder()
@@ -67,16 +51,17 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
     }
   }
 
-  def register(handler: Handler): Unit = synchronized {
+  def register(handler: Handler): Handler = synchronized {
     handlers = (handler :: handlers).sorted
+    handler
   }
 
-  def register(handler: HttpHandler, paths: String*): Unit = {
+  def register(handler: HttpHandler, paths: String*): Handler = {
     logger.info(s"Registering ${paths.mkString(", ")}")
     register(Handler.path(paths.toSet, handler))
   }
 
-  def register(path: String, contentType: String, f: HttpServerExchange => String): Unit = {
+  def register(path: String, contentType: String, f: HttpServerExchange => String): Handler = {
     val handler = new Handler {
       def isURLMatch(url: URL): Boolean = url.path == path
 
@@ -93,23 +78,17 @@ class Server(host: String, port: Int, sessionDomain: Option[String] = None) exte
     register(handler)
   }
 
-  class ServerHandler extends HttpHandler {
-    private val sessionConfig = new SessionCookieConfig {
-      sessionDomain.foreach(setDomain)
-    }
-
-    override def handleRequest(exchange: HttpServerExchange): Unit = {
-      exchange.putAttachment(SessionConfig.ATTACHMENT_KEY, sessionConfig)
-      Server.withServerSession(Sessions.getOrCreateSession(exchange)) {
-        errorSupport {
-          val url = exchange.url
-          val handler = handlers.find(h => h.isURLMatch(url))
-          handler match {
-            case Some(h) => h.handleRequest(url, exchange)
-            case None => {
-              exchange.setStatusCode(404)
-              errorHandler.handleRequest(url, exchange)
-            }
+  override def handleRequest(exchange: HttpServerExchange): Unit = {
+    exchange.putAttachment(SessionConfig.ATTACHMENT_KEY, sessionCookieConfig)
+    Server.withServerSession(Sessions.getOrCreateSession(exchange)) {
+      errorSupport {
+        val url = exchange.url
+        val handler = handlers.find(h => h.isURLMatch(url))
+        handler match {
+          case Some(h) => h.handleRequest(url, exchange)
+          case None => {
+            exchange.setStatusCode(404)
+            errorHandler.handleRequest(url, exchange)
           }
         }
       }
@@ -186,5 +165,26 @@ object Server extends Logging {
     app.init()
 
     server
+  }
+}
+
+object DefaultErrorHandler extends Handler {
+  override def isURLMatch(url: URL): Boolean = false
+
+  override def priority: Priority = Priority.Normal
+
+  override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = {
+    val errorPage =
+      s"""<html>
+          |<head>
+          |  <title>Error</title>
+          |</head>
+          |<body>
+          |  ${exchange.getStatusCode} - ${StatusCodes.getReason(exchange.getStatusCode)}
+          |</body>
+          |</html>""".stripMargin
+    exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, errorPage.length)
+    exchange.getResponseHeaders.put(Headers.CONTENT_TYPE, "text/html")
+    exchange.getResponseSender.send(errorPage)
   }
 }
