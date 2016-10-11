@@ -1,5 +1,9 @@
 package org.hyperscala
 
+import java.net.URI
+
+import io.undertow.Handlers
+import io.undertow.server.handlers.proxy.SimpleProxyClientProvider
 import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.Headers
 
@@ -25,6 +29,13 @@ class HandlerBuilder(matcher: PartialFunction[URL, Boolean] = Map.empty,
 
   def withHandler(handler: HttpHandler): HandlerBuilder = {
     val h = (url: URL, exchange: HttpServerExchange) => handler.handleRequest(exchange)
+    new HandlerBuilder(matcher, h, priority)
+  }
+
+  def withProxy(uri: URI): HandlerBuilder = {
+    val proxyClient = new SimpleProxyClientProvider(uri)
+    val proxyHandler = Handlers.proxyHandler(proxyClient)
+    val h = (url: URL, exchange: HttpServerExchange) => proxyHandler.handleRequest(exchange)
     new HandlerBuilder(matcher, h, priority)
   }
 
