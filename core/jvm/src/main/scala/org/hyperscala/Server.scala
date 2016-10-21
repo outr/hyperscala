@@ -124,20 +124,20 @@ class Server extends Logging with HttpHandler {
 object Server extends Logging {
   object request extends ThreadLocalStore
   object session extends Store {
-    def undertowSession: UndertowSession = request[UndertowSession]("serverSession")
+    def undertowSession: () => UndertowSession = request[() => UndertowSession]("serverSession")
     override def apply[T](key: String): T = get[T](key).getOrElse(throw new NullPointerException(s"$key is not defined in the session."))
-    override def get[T](key: String): Option[T] = Option(undertowSession.getAttribute(key).asInstanceOf[T])
-    override def update[T](key: String, value: T): Unit = undertowSession.setAttribute(key, value)
-    override def remove(key: String): Unit = undertowSession.removeAttribute(key)
+    override def get[T](key: String): Option[T] = Option(undertowSession().getAttribute(key).asInstanceOf[T])
+    override def update[T](key: String, value: T): Unit = undertowSession().setAttribute(key, value)
+    override def remove(key: String): Unit = undertowSession().removeAttribute(key)
   }
 
   private var wrapper: (() => Unit) => Unit = (f: () => Unit) => f()
 
   def wrap(wrapper: (() => Unit) => Unit): Unit = this.wrapper = wrapper
 
-  def withServerSession[R](session: UndertowSession)(f: => R): R = request.scoped(Map.empty) {
+  def withServerSession[R](session: => UndertowSession)(f: => R): R = request.scoped(Map.empty) {
     val previous = request.get("serverSession")
-    request("serverSession") = session
+    request("serverSession") = () => session
     try {
       var result: Option[R] = None
       wrapper(() => {

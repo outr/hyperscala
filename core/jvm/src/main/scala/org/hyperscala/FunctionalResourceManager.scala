@@ -211,7 +211,7 @@ class FunctionalResourceHandler(resourceManager: FunctionalResourceManager) exte
       if (cache != null && cachable && cache.tryServeResponse()) {
         // Cached response
       } else {
-        val serverSession = Server.session.undertowSession
+        val serverSession = Server.session.undertowSession()
         val dispatchTask = new HttpHandler {
           override def handleRequest(exchange: HttpServerExchange): Unit = try {
             Server.withServerSession(serverSession) {

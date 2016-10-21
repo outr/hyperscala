@@ -101,7 +101,7 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
   var lastActive: Long = System.currentTimeMillis()
 
   var exchange: WebSocketHttpExchange = _
-  private[manager] val serverSession = Server.session.undertowSession
+  private[manager] val serverSession = Server.session.undertowSession()
   private var backlog = List.empty[String]
   private var channel: WebSocketChannel = _
 
