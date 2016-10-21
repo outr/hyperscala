@@ -41,7 +41,7 @@ class Server extends Logging with HttpHandler {
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
     setNext(Server.this)
   }
-  private val sessionCookieConfig = new SessionCookieConfig {
+  private lazy val sessionCookieConfig = new SessionCookieConfig {
     config.session.domain.get.foreach(setDomain)
     setMaxAge(config.session.maxAge.get.toSeconds.toInt)
   }
