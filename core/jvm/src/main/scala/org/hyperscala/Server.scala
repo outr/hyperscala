@@ -99,12 +99,12 @@ class Server extends Logging with HttpHandler {
       errorSupport {
         val url = exchange.url
         val handler = handlers.find(h => h.isURLMatch(url))
-        handler match {
-          case Some(h) => h.handleRequest(url, exchange)
-          case None => {
-            exchange.setStatusCode(404)
-            errorHandler.handleRequest(url, exchange)
-          }
+        handler.foreach(_.handleRequest(url, exchange))
+        if (handler.isEmpty) {
+          exchange.setStatusCode(404)
+        }
+        if (exchange.getStatusCode >= 400) {
+          errorHandler.handleRequest(url, exchange)
         }
       }
     }

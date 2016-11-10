@@ -15,7 +15,10 @@ class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
 
   override def init(): Unit = {
     app.reloadRequest.attach { r =>
-      window.location.reload(r.force)
+      r.url match {
+        case Some(url) => window.location.href = url
+        case None => window.location.reload(r.force)
+      }
     }
     _connection.init()
   }

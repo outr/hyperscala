@@ -4,7 +4,7 @@ import com.outr.scribe.Logging
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.websockets.core._
 import io.undertow.websockets.spi.WebSocketHttpExchange
-import org.hyperscala.{Connection, PartialSupport, ReloadRequest, Request, ScreenContentResponse, Server, ServerScreen, URL, Unique, WebApplication}
+import org.hyperscala.{Connection, PartialSupport, ReloadRequest, Request, RequestValidator, ScreenContentResponse, Server, ServerScreen, URL, Unique, ValidationResult, WebApplication}
 
 class ServerApplicationManager(val app: WebApplication) extends WebSocketConnectionCallback with ApplicationManager {
   private val currentConnection = new ThreadLocal[Option[Connection]] {
@@ -89,8 +89,24 @@ class ServerApplicationManager(val app: WebApplication) extends WebSocketConnect
       val screen = app.byName(evt.screenName).getOrElse(throw new RuntimeException(s"Unable to find screen by name: ${evt.screenName} (${app.screens.map(_.screenName).mkString(", ")})."))
       val serverScreen = screen.asInstanceOf[ServerScreen]
       val title = serverScreen.title()
-      val html = serverScreen.html(Request(Right(connection.exchange)), partial = true)
-      app.screenContentResponse := ScreenContentResponse(title, html, evt.screenName, serverScreen.asInstanceOf[PartialSupport].partialParentId, evt.replace)
+      val request = Request(Right(connection.exchange))
+      val validationResult = serverScreen match {
+        case validator: RequestValidator => validator.validate(request)
+        case _ => ValidationResult.Continue
+      }
+      validationResult match {
+        case ValidationResult.Continue => {
+          val html = serverScreen.html(request, partial = true)
+          app.screenContentResponse := ScreenContentResponse(title, html, evt.screenName, serverScreen.asInstanceOf[PartialSupport].partialParentId, evt.replace)
+        }
+        case ValidationResult.Redirect(location) => {
+          app.reloadRequest := ReloadRequest(force = false, url = Some(location))
+        }
+        case ValidationResult.Error(status, message) => {
+          logger.info(s"Error: $status, $message - forcing screen reload!")
+          app.reloadRequest := ReloadRequest(force = true)
+        }
+      }
     }
   }
 }

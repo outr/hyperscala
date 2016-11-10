@@ -3,9 +3,9 @@ import io.undertow.server.HttpServerExchange
 import io.undertow.util.{Headers, HttpString, StatusCodes}
 
 trait RequestValidator extends ServerScreen {
-  def validate(exchange: HttpServerExchange): ValidationResult
+  def validate(request: Request): ValidationResult
 
-  override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = validate(exchange) match {
+  override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = validate(Request(Left(exchange))) match {
     case ValidationResult.Continue => super.handleRequest(url, exchange)
     case ValidationResult.Redirect(location) => {
       exchange.setStatusCode(StatusCodes.FOUND)

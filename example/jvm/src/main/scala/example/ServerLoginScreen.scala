@@ -26,7 +26,7 @@ trait ServerLoginScreen extends LoginScreen with ServerScreen with PartialSuppor
     Delta.ReplaceContent(ByTag("title"), "Modified Login Title")
   )
 
-  override def validate(exchange: HttpServerExchange): ValidationResult = {
+  override def validate(request: Request): ValidationResult = {
     if (ExampleServer.session.username.get.isEmpty) {
       logger.info(s"User is not logged in!")
       ValidationResult.Continue

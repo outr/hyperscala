@@ -1,10 +1,10 @@
 package example
 
 import io.undertow.server.HttpServerExchange
-import org.hyperscala.{RequestValidator, ValidationResult}
+import org.hyperscala.{Request, RequestValidator, ValidationResult}
 
 trait UserRequestValidator extends RequestValidator {
-  override def validate(exchange: HttpServerExchange): ValidationResult = {
+  override def validate(request: Request): ValidationResult = {
     if (ExampleServer.session.username.get.nonEmpty) {
       logger.info(s"User is logged in as: ${ExampleServer.session.username.get.get}")
       ValidationResult.Continue
