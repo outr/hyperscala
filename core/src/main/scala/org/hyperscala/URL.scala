@@ -66,7 +66,9 @@ case class URL(protocol: Protocol = Protocol.Http,
 }
 
 object URL {
-  def apply(url: String): URL = {
+  def apply(url: String): URL = if (url.indexOf('#') != -1) {
+    apply(url.substring(0, url.indexOf('#')))     // Clip hash as it's not supported server-side
+  } else {
     val colonIndex1 = url.indexOf(':')
     val protocol = Protocol(url.substring(0, colonIndex1))
     val slashIndex = url.indexOf('/', colonIndex1 + 3)
