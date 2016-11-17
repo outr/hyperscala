@@ -60,9 +60,9 @@ abstract class WebApplication(val siteType: SiteType) extends BaseApplication wi
     appManager.init()
   }
 
-  def byURL(url: URL): Screen = {
-    screens.find(_.isURLMatch(url)).getOrElse(throw new RuntimeException(s"No screen found for the specified url: $url (path: ${url.path})."))
-  }
+  def getByURL(url: URL): Option[Screen] = screens.find(_.isURLMatch(url))
+
+  def byURL(url: URL): Screen = getByURL(url).getOrElse(throw new RuntimeException(s"No screen found for the specified url: $url (path: ${url.path})."))
 
   def byName(screenName: String): Option[Screen] = screensByName.get(screenName)
 

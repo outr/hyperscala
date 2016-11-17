@@ -145,16 +145,18 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
     WebSockets.sendText(message, channel, None.orNull)
   }
 
-  override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = manager.using(this) {
-    val data = message.getData
-    logger.debug(s"Received: $data")
-    val index = data.indexOf(':')
-    if (index == -1) {
-      logger.error(s"Ignoring invalid message: $data")
-    } else {
-      val id = data.substring(0, index).toInt
-      val json = data.substring(index + 1)
-      receive(id, json)
+  override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = manager.app.errorSupport {
+    manager.using(this) {
+      val data = message.getData
+      logger.debug(s"Received: $data")
+      val index = data.indexOf(':')
+      if (index == -1) {
+        logger.error(s"Ignoring invalid message: $data")
+      } else {
+        val id = data.substring(0, index).toInt
+        val json = data.substring(index + 1)
+        receive(id, json)
+      }
     }
   }
 
