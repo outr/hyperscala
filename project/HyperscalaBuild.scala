@@ -120,7 +120,7 @@ object HyperscalaBuild extends Build {
 object Details {
   val organization = "org.hyperscala"
   val name = "hyperscala"
-  val version = "2.1.4-SNAPSHOT"
+  val version = "2.1.4"
   val url = "http://hyperscala.org"
   val licenseType = "MIT"
   val licenseURL = "http://opensource.org/licenses/MIT"

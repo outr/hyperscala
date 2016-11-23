@@ -101,7 +101,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   def pushURL(url: URL, force: Boolean = false): Unit = if (document.location.href != url.toString || force) app.siteType match {
     case SiteType.SinglePage if app.getByURL(url).nonEmpty => {
       val urlString = url.toString
-      logger.info(s"pushPath: $urlString screen: ${app.getByURL(url)}")
+      logger.debug(s"pushPath: $urlString screen: ${app.getByURL(url)}")
       window.history.pushState(urlString, urlString, urlString)
       updateState()
     }
@@ -113,7 +113,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   def replaceURL(url: URL, force: Boolean = false): Unit = if (document.location.href != url.toString || force) app.siteType match {
     case SiteType.SinglePage if app.getByURL(url).nonEmpty => {
       val urlString = url.toString
-      logger.info(s"replacePath: $urlString screen: ${app.getByURL(url)}")
+      logger.debug(s"replacePath: $urlString screen: ${app.getByURL(url)}")
       window.history.replaceState(urlString, urlString, urlString)
       updateState()
     }
