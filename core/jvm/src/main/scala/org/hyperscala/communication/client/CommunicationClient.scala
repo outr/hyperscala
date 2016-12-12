@@ -1,21 +1,25 @@
 package org.hyperscala.communication.client
 
+import java.io.File
 import java.net.URI
 import java.util
 
+import io.undertow.protocols.ssl.UndertowXnioSsl
 import io.undertow.server.DefaultByteBufferPool
 import io.undertow.util.Headers
 import io.undertow.websockets.client.WebSocketClient.ConnectionBuilder
 import io.undertow.websockets.client.{WebSocketClient, WebSocketClientNegotiation}
 import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage, WebSocketCallback, WebSocketChannel, WebSockets}
-import org.hyperscala.{Pickler, Server}
 import org.hyperscala.communication.Communication
+import org.hyperscala.util.SSLUtil
 import org.xnio.{OptionMap, Options, Xnio}
 import pl.metastack.metarx.{Channel, Var}
 
 import scala.collection.JavaConversions._
 
 class CommunicationClient(uri: URI,
+                          keyStoreFile: Option[File] = None,
+                          keyStorePassword: String = "password",
                           autoReconnect: Boolean = true,
                           directBuffer: Boolean = false,
                           bufferSize: Int = 2048,
@@ -38,14 +42,21 @@ class CommunicationClient(uri: URI,
     .getMap
   )
   private lazy val bufferPool = new DefaultByteBufferPool(directBuffer, bufferSize)
-  private lazy val connectionBuilder: ConnectionBuilder = WebSocketClient.connectionBuilder(worker, bufferPool, uri)
-    .setClientNegotiation(new WebSocketClientNegotiation(null, null) {
-      override def beforeRequest(headers: util.Map[String, util.List[String]]): Unit = {
-        authorization.foreach { auth =>
-          headers.put(Headers.AUTHORIZATION_STRING, List(auth))
+  private lazy val connectionBuilder: ConnectionBuilder = {
+    val builder = WebSocketClient.connectionBuilder(worker, bufferPool, uri)
+      .setClientNegotiation(new WebSocketClientNegotiation(null, null) {
+        override def beforeRequest(headers: util.Map[String, util.List[String]]): Unit = {
+          authorization.foreach { auth =>
+            headers.put(Headers.AUTHORIZATION_STRING, List(auth))
+          }
         }
-      }
-    })
+      })
+    keyStoreFile.foreach { file =>
+      val sslContext = SSLUtil.createSSLContext(file, keyStorePassword)
+      builder.setSsl(new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext))
+    }
+    builder
+  }
 
   private val _channel = Var[Option[WebSocketChannel]](None)
   def channel: WebSocketChannel = _channel.get.getOrElse(throw new RuntimeException("No connection has been established."))

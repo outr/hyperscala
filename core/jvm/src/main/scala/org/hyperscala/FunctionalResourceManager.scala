@@ -1,7 +1,6 @@
 package org.hyperscala
 
 import java.io.{File, IOException}
-import java.util
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
@@ -159,7 +158,7 @@ trait PathResourceMapping extends ResourceMapping {
     super.init(resourceManager)
 
     fileSystemWatcher.watchPath(new File(base), new FileChangeCallback {
-      override def handleChanges(changes: util.Collection[FileChangeEvent]): Unit = resourceManager.synchronized {
+      override def handleChanges(changes: java.util.Collection[FileChangeEvent]): Unit = resourceManager.synchronized {
         val events = changes.collect {
           case change if change.getFile.getAbsolutePath.startsWith(base) => {
             val path = change.getFile.getAbsolutePath.substring(base.length)

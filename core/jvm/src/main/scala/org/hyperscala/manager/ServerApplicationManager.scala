@@ -119,7 +119,8 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
   var exchange: WebSocketHttpExchange = _
   private[manager] val serverSession = Server.session.undertowSession()
   private var backlog = List.empty[String]
-  private var channel: WebSocketChannel = _
+  private var _channel: WebSocketChannel = _
+  def channel: WebSocketChannel = _channel
 
   override def app: WebApplication = manager.app
 
@@ -127,7 +128,7 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
 
   def bind(exchange: WebSocketHttpExchange, channel: WebSocketChannel): Unit = {
     this.exchange = exchange
-    this.channel = channel
+    this._channel = channel
 
     backlog.reverse.foreach(send)
     backlog = Nil
@@ -135,14 +136,14 @@ class ServerConnection(manager: ServerApplicationManager, val initialURL: URL) e
 
   override def send(id: Int, json: String): Unit = synchronized {
     val message = s"$id:$json"
-    Option(channel) match {
+    Option(_channel) match {
       case Some(c) => send(message)
       case None => backlog = message :: backlog
     }
   }
 
   def send(message: String): Unit = synchronized {
-    WebSockets.sendText(message, channel, None.orNull)
+    WebSockets.sendText(message, _channel, None.orNull)
   }
 
   override def onFullTextMessage(channel: WebSocketChannel, message: BufferedTextMessage): Unit = manager.app.errorSupport {

@@ -4,6 +4,15 @@ import com.outr.scribe.Logging
 
 trait Screen extends BaseScreen with Logging {
   def screenName: String
+  def shortScreenName: String = {
+    val s = screenName
+    val lastIndex = s.lastIndexOf('.')
+    if (lastIndex != -1) {
+      s.substring(lastIndex + 1)
+    } else {
+      s
+    }
+  }
 
   /**
     * Defines the sorting order for the collection of Screens in the WebApplication. This is useful for fall-through

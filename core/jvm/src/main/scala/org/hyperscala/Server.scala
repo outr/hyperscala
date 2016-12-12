@@ -1,11 +1,14 @@
 package org.hyperscala
 
+import java.io.File
+
 import com.outr.scribe.Logging
 import io.undertow.server.session.{SessionAttachmentHandler, SessionConfig, SessionCookieConfig, Session => UndertowSession}
 import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.{Handlers, Undertow, UndertowOptions}
+import org.hyperscala.util.SSLUtil
 import pl.metastack.metarx.Sub
 
 import scala.concurrent.duration._
@@ -17,6 +20,14 @@ class Server extends Logging with HttpHandler {
     val autoRestart: Sub[Boolean] = sub(true)
     val host: Sub[String] = sub("0.0.0.0")
     val port: Sub[Int] = sub(8080)
+
+    object https {
+      val enabled: Sub[Boolean] = sub(false)
+      val host: Sub[String] = sub("0.0.0.0")
+      val port: Sub[Int] = sub(8443)
+      val password: Sub[String] = sub("password")
+      val keyStoreLocation: Sub[File] = sub(new File("keystore.jks"))
+    }
 
     object session {
       val domain: Sub[Option[String]] = sub(None)
@@ -40,6 +51,11 @@ class Server extends Logging with HttpHandler {
   private val sessionConfig = new SessionCookieConfig
   private val sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig) {
     setNext(Server.this)
+
+    override def handleRequest(exchange: HttpServerExchange): Unit = {
+//      logger.info(s"handle request! ${exchange.url}")
+      super.handleRequest(exchange)
+    }
   }
   private lazy val sessionCookieConfig = new SessionCookieConfig {
     config.session.domain.get.foreach(setDomain)
@@ -52,18 +68,27 @@ class Server extends Logging with HttpHandler {
   var errorHandler: Handler = DefaultErrorHandler
 
   def start(): Unit = synchronized {
-    val server = Undertow.builder()
+    val builder = Undertow.builder()
       .setServerOption(UndertowOptions.ENABLE_HTTP2, java.lang.Boolean.TRUE)
       .addHttpListener(config.port.get, config.host.get)
       .setHandler(sessionAttachmentHandler)
-      .build()
+    if (config.https.enabled.get) {
+      val sslContext = SSLUtil.createSSLContext(config.https.keyStoreLocation.get, config.https.password.get)
+      builder.addHttpsListener(config.https.port.get, config.https.host.get, sslContext)
+    }
+    val server = builder.build()
     try {
       server.start()
     } catch {
       case t: Throwable => throw new RuntimeException(s"Failed to start server at ${config.host.get}:${config.port.get}.", t)
     }
     instance = Some(server)
-    logger.info(s"Server started on ${config.host.get}:${config.port.get}...")
+    val httpsMessage = if (config.https.enabled.get) {
+      s". HTTPS started on ${config.https.host.get}:${config.https.port.get}"
+    } else {
+      ""
+    }
+    logger.info(s"Server started on ${config.host.get}:${config.port.get}$httpsMessage...")
   }
 
   def isStarted: Boolean = instance.nonEmpty

@@ -50,7 +50,6 @@ trait ServerScreen extends Screen with Handler with Logging {
   override def handleRequest(url: URL, exchange: HttpServerExchange): Unit = {
     val partial = Option(exchange.getQueryParameters.get("partial")).exists(_.contains("true"))
     val html = this.html(Request(Left(exchange)), partial)
-    exchange.getResponseHeaders.put(Headers.CONTENT_LENGTH, html.length)
     exchange.getResponseHeaders.put(Headers.CONTENT_TYPE, "text/html")
     exchange.getResponseSender.send(html)
   }

@@ -1,10 +1,9 @@
 package org.hyperscala.manager
 
 import com.outr.scribe.Logging
-import org.hyperscala._
+import org.hyperscala.{URL, _}
 import org.scalajs.dom._
 import org.scalajs.dom.raw.WebSocket
-import org.hyperscala.URL
 
 class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
   private val _connection = new ClientConnection(app, URL(document.location.href))
@@ -25,8 +24,9 @@ class ClientApplicationManager(app: WebApplication) extends ApplicationManager {
 }
 
 class ClientConnection(val app: WebApplication, val initialURL: URL) extends Connection with Logging {
+  private lazy val isSSL = window.location.protocol == "https:"
   private lazy val connectionId = byId[html.Input]("hyperscala-connection-id").value
-  private lazy val webSocket = new WebSocket(s"ws://${window.location.host}${app.communicationPath}?$connectionId")
+  private lazy val webSocket = new WebSocket(s"${if (isSSL) "wss" else "ws"}://${window.location.host}${app.communicationPath}?$connectionId")
 
   private var connected = false
   private var queue = List.empty[String]
