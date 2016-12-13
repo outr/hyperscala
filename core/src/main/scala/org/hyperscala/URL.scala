@@ -37,7 +37,28 @@ case class URL(protocol: Protocol = Protocol.Http,
 
   def param(key: String): Option[String] = parameters.get(key).map(_.value)
 
-  override def toString: String = {
+  def withBase(base: String): URL = {
+    var s = base
+    var protocol = this.protocol
+    var host = this.host
+    var port = this.port
+    val protocolBreak = s.indexOf("://")
+    if (protocolBreak != -1) {
+      protocol = Protocol(s.substring(0, protocolBreak))
+      s = s.substring(protocolBreak + 3)
+    }
+    val portBreak = s.indexOf(':')
+    if (portBreak != -1) {
+      port = s.substring(portBreak + 1).toInt
+      s = s.substring(0, portBreak)
+    }
+    if (s.nonEmpty) {
+      host = s
+    }
+    copy(protocol = protocol, host = host, port = port)
+  }
+
+  lazy val base: String = {
     val b = new StringBuilder
     b.append(protocol.scheme)
     b.append("://")
@@ -47,6 +68,11 @@ case class URL(protocol: Protocol = Protocol.Http,
       case Protocol.Https if port == 443 => // No need
       case _ => b.append(s":$port")
     }
+    b.toString()
+  }
+
+  lazy val pathAndArgs: String = {
+    val b = new StringBuilder
     b.append(path)
     if (parameters.nonEmpty) {
       b.append('?')
@@ -63,6 +89,10 @@ case class URL(protocol: Protocol = Protocol.Http,
     }
     b.toString()
   }
+
+  lazy val asString: String = s"$base$pathAndArgs"
+
+  override def toString: String = asString
 }
 
 object URL {
