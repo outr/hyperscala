@@ -6,18 +6,17 @@ import org.scalajs.dom._
 import org.scalajs.dom.ext._
 import org.scalajs.dom.raw.HTMLElement
 
-import scala.annotation.tailrec
 import scala.language.implicitConversions
 
 package object hyperscala extends Logging {
-  def byTag[T <: HTMLElement](tagName: String): Vector[T] = {
+  def byTag[T <: Element](tagName: String): Vector[T] = {
     document.getElementsByTagName(tagName).toVector.map(_.asInstanceOf[T])
   }
-  def byClass[T <: HTMLElement](className: String): Vector[T] = {
+  def byClass[T <: Element](className: String): Vector[T] = {
     document.getElementsByClassName(className).toVector.map(_.asInstanceOf[T])
   }
 
-  def byId[T <: HTMLElement](id: String): T = Option(document.getElementById(id).asInstanceOf[T]) match {
+  def byId[T <: Element](id: String): T = Option(document.getElementById(id).asInstanceOf[T]) match {
     case Some(t) => t
     case None => {
       val message = s"Unable to find element by id '$id'."
@@ -37,17 +36,17 @@ package object hyperscala extends Logging {
     }
   }
 
-  implicit class HTMLElementExtras(e: HTMLElement) {
-    def byTag[T <: HTMLElement](tagName: String): Vector[T] = {
+  implicit class ElementExtras(e: Element) {
+    def byTag[T <: Element](tagName: String): Vector[T] = {
       e.getElementsByTagName(tagName).toVector.map(_.asInstanceOf[T])
     }
-    def byClass[T <: HTMLElement](className: String): Vector[T] = {
+    def byClass[T <: Element](className: String): Vector[T] = {
       e.getElementsByClassName(className).toVector.map(_.asInstanceOf[T])
     }
-    def parentByTag[T <: HTMLElement](tagName: String): Option[T] = findParentRecursive[T](e, (p: HTMLElement) => {
+    def parentByTag[T <: HTMLElement](tagName: String): Option[T] = findParentRecursive[T](e.asInstanceOf[HTMLElement], (p: HTMLElement) => {
       p.tagName == tagName
     })
-    def parentByClass[T <: HTMLElement](className: String): Option[T] = findParentRecursive[T](e, (p: HTMLElement) => {
+    def parentByClass[T <: HTMLElement](className: String): Option[T] = findParentRecursive[T](e.asInstanceOf[HTMLElement], (p: HTMLElement) => {
       p.classList.contains(className)
     })
 

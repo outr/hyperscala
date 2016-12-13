@@ -7,7 +7,7 @@ import io.undertow.server.session.{SessionAttachmentHandler, SessionConfig, Sess
 import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
-import io.undertow.{Handlers, Undertow, UndertowOptions}
+import io.undertow.{Handlers, Undertow}
 import org.hyperscala.util.SSLUtil
 import pl.metastack.metarx.Sub
 
@@ -69,7 +69,7 @@ class Server extends Logging with HttpHandler {
 
   def start(): Unit = synchronized {
     val builder = Undertow.builder()
-      .setServerOption(UndertowOptions.ENABLE_HTTP2, java.lang.Boolean.TRUE)
+//      .setServerOption(UndertowOptions.ENABLE_HTTP2, java.lang.Boolean.TRUE)
       .addHttpListener(config.port.get, config.host.get)
       .setHandler(sessionAttachmentHandler)
     if (config.https.enabled.get) {
