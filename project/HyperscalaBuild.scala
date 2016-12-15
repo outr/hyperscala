@@ -13,7 +13,7 @@ object HyperscalaBuild extends Build {
     .settings(
       libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
       libraryDependencies ++= Seq(
-        "com.outr.scribe" %%% "scribe" % Dependencies.scribe,
+        "com.outr" %%% "scribe" % Dependencies.scribe,
         "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
         "com.outr" %%% "metarx" % Dependencies.metaRx,
         "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
@@ -29,7 +29,7 @@ object HyperscalaBuild extends Build {
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "com.outr.scribe" %% "scribe-slf4j" % Dependencies.scribe,
+        "com.outr" %% "scribe-slf4j" % Dependencies.scribe,
         "io.undertow" % "undertow-core" % Dependencies.undertow
       )
     )
@@ -42,7 +42,7 @@ object HyperscalaBuild extends Build {
     .settings(
       libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
       libraryDependencies ++= Seq(
-        "com.outr.scribe" %%% "scribe" % Dependencies.scribe,
+        "com.outr" %%% "scribe" % Dependencies.scribe,
         "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
         "com.outr" %%% "metarx" % Dependencies.metaRx,
         "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
@@ -58,7 +58,7 @@ object HyperscalaBuild extends Build {
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "com.outr.scribe" %% "scribe-slf4j" % Dependencies.scribe,
+        "com.outr" %% "scribe-slf4j" % Dependencies.scribe,
         "io.undertow" % "undertow-core" % Dependencies.undertow
       )
     )
@@ -120,7 +120,7 @@ object HyperscalaBuild extends Build {
 object Details {
   val organization = "org.hyperscala"
   val name = "hyperscala"
-  val version = "2.1.5"
+  val version = "2.1.6-SNAPSHOT"
   val url = "http://hyperscala.org"
   val licenseType = "MIT"
   val licenseURL = "http://opensource.org/licenses/MIT"
@@ -136,7 +136,7 @@ object Details {
 }
 
 object Dependencies {
-  val scribe = "1.2.5"
+  val scribe = "1.2.6"
   val undertow = "1.4.7.Final"
   val uPickle = "0.4.1"
   val scalaTest = "3.0.0-M16-SNAP4"

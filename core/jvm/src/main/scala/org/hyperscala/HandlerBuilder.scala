@@ -1,11 +1,15 @@
 package org.hyperscala
 
+import java.io.File
 import java.net.URI
 
 import io.undertow.Handlers
-import io.undertow.server.handlers.proxy.SimpleProxyClientProvider
+import io.undertow.protocols.ssl.UndertowXnioSsl
+import io.undertow.server.handlers.proxy.LoadBalancingProxyClient
 import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.Headers
+import org.hyperscala.util.SSLUtil
+import org.xnio.{OptionMap, Xnio}
 
 class HandlerBuilder(matcher: PartialFunction[URL, Boolean] = Map.empty,
                      handler: (URL, HttpServerExchange) => Unit = (url, exchange) => Unit,
@@ -32,8 +36,13 @@ class HandlerBuilder(matcher: PartialFunction[URL, Boolean] = Map.empty,
     new HandlerBuilder(matcher, h, priority)
   }
 
-  def withProxy(uri: URI): HandlerBuilder = {
-    val proxyClient = new SimpleProxyClientProvider(uri)
+  def withProxy(uri: URI, keyStoreFile: Option[File] = None, keyStorePassword: String = "password"): HandlerBuilder = {
+    val proxyClient = new LoadBalancingProxyClient
+    val ssl = keyStoreFile.map { file =>
+      val sslContext = SSLUtil.createSSLContext(file, keyStorePassword)
+      new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, sslContext)
+    }
+    proxyClient.addHost(uri, ssl.orNull)
     val proxyHandler = Handlers.proxyHandler(proxyClient)
     val h = (url: URL, exchange: HttpServerExchange) => proxyHandler.handleRequest(exchange)
     new HandlerBuilder(matcher, h, priority)

@@ -51,6 +51,10 @@ case class URL(protocol: Protocol = Protocol.Http,
     if (portBreak != -1) {
       port = s.substring(portBreak + 1).toInt
       s = s.substring(0, portBreak)
+    } else if (protocol == Protocol.Http) {
+      port = 80
+    } else if (protocol == Protocol.Https) {
+      port = 443
     }
     if (s.nonEmpty) {
       host = s
