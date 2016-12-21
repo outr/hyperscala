@@ -16,7 +16,9 @@ package object hyperscala extends Logging {
     document.getElementsByClassName(className).toVector.map(_.asInstanceOf[T])
   }
 
-  def byId[T <: Element](id: String): T = Option(document.getElementById(id).asInstanceOf[T]) match {
+  def getById[T <: Element](id: String): Option[T] = Option(document.getElementById(id).asInstanceOf[T])
+
+  def byId[T <: Element](id: String): T = getById[T](id) match {
     case Some(t) => t
     case None => {
       val message = s"Unable to find element by id '$id'."
