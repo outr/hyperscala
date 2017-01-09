@@ -49,6 +49,9 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
     }
     webSocket.onclose = (evt: CloseEvent) => {
       logger.info(s"WebSocket connection closed")
+      window.setTimeout(() => {
+        window.location.reload()
+      }, 1.0)
     }
     webSocket.onmessage = (evt: MessageEvent) => {
       val messageData = evt.data.toString
