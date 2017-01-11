@@ -11,6 +11,14 @@ object Util {
 
   private val encodedRegex = """%([a-zA-Z0-9]{2})""".r
 
+  def encodePath(path: String): String = path.map {
+    case c if unreservedCharacters.contains(c) => c
+    case '/' => '/'
+    case c => s"%${c.toLong.toHexString.toUpperCase}"
+  }.mkString
+
+  def decodePath(path: String): String = decodeURIComponent(path)
+
   def encodeURIComponent(part: String): String = part.map {
     case c if unreservedCharacters.contains(c) => c
     case c => s"%${c.toLong.toHexString.toUpperCase}"

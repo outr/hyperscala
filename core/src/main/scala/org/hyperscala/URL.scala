@@ -77,7 +77,7 @@ case class URL(protocol: Protocol = Protocol.Http,
 
   lazy val pathAndArgs: String = {
     val b = new StringBuilder
-    b.append(path)
+    b.append(Util.encodePath(path))
     if (parameters.nonEmpty) {
       b.append('?')
       val params = parameters.flatMap {
@@ -125,9 +125,9 @@ object URL {
     val path = if (slashIndex == -1) {
       "/"
     } else if (questionIndex == -1) {
-      url.substring(slashIndex)
+      Util.decodePath(url.substring(slashIndex))
     } else {
-      url.substring(slashIndex, questionIndex)
+      Util.decodePath(url.substring(slashIndex, questionIndex))
     }
     val parameters = if (questionIndex == -1) {
       Map.empty[String, Param]
