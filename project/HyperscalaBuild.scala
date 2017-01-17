@@ -84,6 +84,7 @@ object HyperscalaBuild extends Build {
     version := Details.version,
     organization := Details.organization,
     scalaVersion := Details.scalaVersion,
+    crossScalaVersions := Details.scalaVersions,
     sbtVersion := Details.sbtVersion,
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
     resolvers ++= Seq(
