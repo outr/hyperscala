@@ -120,7 +120,7 @@ object HyperscalaBuild extends Build {
 object Details {
   val organization = "org.hyperscala"
   val name = "hyperscala"
-  val version = "2.1.9-SNAPSHOT"
+  val version = "2.1.9"
   val url = "http://hyperscala.org"
   val licenseType = "MIT"
   val licenseURL = "http://opensource.org/licenses/MIT"
@@ -141,7 +141,7 @@ object Dependencies {
   val uPickle = "0.4.4"
   val scalaTest = "3.0.1"
   val scalaJSDOM = "0.9.1"
-  val reactify = "1.3.6-SNAPSHOT"
+  val reactify = "1.3.6"
 }
 
 object HyperscalaCrossType extends org.scalajs.sbtplugin.cross.CrossType {
