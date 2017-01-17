@@ -1,10 +1,10 @@
 package example
 
+import com.outr.reactify.Var
 import org.hyperscala.{DefaultSessionManager, Session}
-import pl.metastack.metarx.Sub
 
 class ExampleSession extends Session {
-  val username: Sub[Option[String]] = Sub[Option[String]](None)
+  val username: Var[Option[String]] = Var[Option[String]](None)
 }
 
 object ExampleSession extends DefaultSessionManager[ExampleSession] {

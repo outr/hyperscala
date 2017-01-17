@@ -1,7 +1,7 @@
 package org.hyperscala
 
+import com.outr.reactify.Var
 import com.outr.scribe.Logging
-import pl.metastack.metarx.Sub
 
 trait Connection extends Logging {
   protected[hyperscala] var replace = false
@@ -9,8 +9,8 @@ trait Connection extends Logging {
   def app: WebApplication
 
   def initialURL: URL
-  lazy val url: Sub[URL] = Sub(initialURL)
-  lazy val screen: Sub[BaseScreen] = Sub(app.byURL(initialURL))
+  lazy val url: Var[URL] = Var[URL](initialURL)
+  lazy val screen: Var[BaseScreen] = Var[BaseScreen](app.byURL(initialURL))
 
   def init(): Unit = {
     logger.info(s"Initial URL: ${url.get}, Starting Screen: ${screen.get}")

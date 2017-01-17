@@ -2,6 +2,7 @@ package org.hyperscala
 
 import java.io.File
 
+import com.outr.reactify.Var
 import com.outr.scribe.Logging
 import io.undertow.server.session.{SessionAttachmentHandler, SessionConfig, SessionCookieConfig, Session => UndertowSession}
 import io.undertow.server.{HttpHandler, HttpServerExchange}
@@ -9,7 +10,6 @@ import io.undertow.util.{Headers, Sessions, StatusCodes}
 import io.undertow.websockets.WebSocketConnectionCallback
 import io.undertow.{Handlers, Undertow}
 import org.hyperscala.util.SSLUtil
-import pl.metastack.metarx.Sub
 
 import scala.concurrent.duration._
 import scala.language.experimental.macros
@@ -17,26 +17,26 @@ import scala.language.implicitConversions
 
 class Server extends Logging with HttpHandler {
   object config {
-    val autoRestart: Sub[Boolean] = sub(true)
-    val host: Sub[String] = sub("0.0.0.0")
-    val port: Sub[Int] = sub(8080)
+    val autoRestart: Var[Boolean] = sub(true)
+    val host: Var[String] = sub("0.0.0.0")
+    val port: Var[Int] = sub(8080)
 
     object https {
-      val enabled: Sub[Boolean] = sub(false)
-      val host: Sub[String] = sub("0.0.0.0")
-      val port: Sub[Int] = sub(8443)
-      val password: Sub[String] = sub("password")
-      val keyStoreLocation: Sub[File] = sub(new File("keystore.jks"))
+      val enabled: Var[Boolean] = sub(false)
+      val host: Var[String] = sub("0.0.0.0")
+      val port: Var[Int] = sub(8443)
+      val password: Var[String] = sub("password")
+      val keyStoreLocation: Var[File] = sub(new File("keystore.jks"))
     }
 
     object session {
-      val domain: Sub[Option[String]] = sub(None)
-      val maxAge: Sub[FiniteDuration] = sub(0.seconds)
+      val domain: Var[Option[String]] = sub(None)
+      val maxAge: Var[FiniteDuration] = sub(0.seconds)
     }
 
-    private def sub[T](value: T): Sub[T] = {
-      val s = Sub[T](value)
-      s.silentAttach { value =>
+    private def sub[T](value: T): Var[T] = {
+      val s = Var[T](value)
+      s.attach { value =>
         if (autoRestart.get && isStarted) {
           restart()
         }

@@ -1,6 +1,6 @@
 package org.hyperscala
 
-import pl.metastack.metarx.Channel
+import com.outr.reactify.Channel
 
 import scala.annotation.compileTimeOnly
 import scala.reflect.macros.blackbox

@@ -1,7 +1,7 @@
 package org.hyperscala.communication
 
+import com.outr.reactify.Channel
 import org.hyperscala.{BaseMacros, Pickler, Picklers}
-import pl.metastack.metarx.Channel
 
 import scala.language.experimental.macros
 

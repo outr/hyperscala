@@ -1,11 +1,13 @@
 package org.hyperscala.ajax
 
-import pl.metastack.metarx.{StateChannel, Var}
+import com.outr.reactify.{StateChannel, Var}
+import org.scalajs.dom.XMLHttpRequest
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class AjaxAction(request: AjaxRequest) {
-  lazy val future = request.promise.future
+  lazy val future: Future[XMLHttpRequest] = request.promise.future
   private[ajax] val _state = Var[ActionState](ActionState.New)
   def state: StateChannel[ActionState] = _state
   def loaded: StateChannel[Int] = request.loaded

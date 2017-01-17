@@ -1,8 +1,8 @@
 package org.hyperscala
 
+import com.outr.reactify.{Channel, Var}
 import org.hyperscala.manager.ClientConnection
 import org.scalajs.dom._
-import pl.metastack.metarx.{Channel, Sub}
 
 trait ClientScreen extends Screen {
   private[hyperscala] var _loaded = false
@@ -10,8 +10,8 @@ trait ClientScreen extends Screen {
 
   protected[hyperscala] var activated = false
 
-  val title: Sub[Option[String]] = Sub(None)
-  val stateChange: Channel[StateChange] = Channel()
+  val title: Var[Option[String]] = Var(None)
+  val stateChange: Channel[StateChange] = Channel[StateChange]
 
   def urlChanged(url: URL): Unit = {}
 
@@ -62,7 +62,7 @@ trait ClientScreen extends Screen {
       case false => InitState.ScreenLoad
     }
     _loaded = true
-    title.attach {
+    title.attachAndFire {
       case Some(t) => if (app.connection.screen.get == this) {
         document.title = t
       }

@@ -1,6 +1,6 @@
 package org.hyperscala
 
-import pl.metastack.metarx.Channel
+import com.outr.reactify.Channel
 
 abstract class Pickler[T](app: Picklers) {
   private val receiving = new ThreadLocal[Option[T]] {

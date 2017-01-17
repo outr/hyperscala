@@ -15,7 +15,7 @@ object HyperscalaBuild extends Build {
       libraryDependencies ++= Seq(
         "com.outr" %%% "scribe" % Dependencies.scribe,
         "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
-        "com.outr" %%% "metarx" % Dependencies.metaRx,
+        "com.outr" %%% "reactify" % Dependencies.reactify,
         "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
       ),
       autoAPIMappings := true,
@@ -44,7 +44,6 @@ object HyperscalaBuild extends Build {
       libraryDependencies ++= Seq(
         "com.outr" %%% "scribe" % Dependencies.scribe,
         "com.lihaoyi" %%% "upickle" % Dependencies.uPickle,
-        "com.outr" %%% "metarx" % Dependencies.metaRx,
         "org.scalatest" %%% "scalatest" % Dependencies.scalaTest % "test"
       ),
       autoAPIMappings := true,
@@ -130,18 +129,18 @@ object Details {
   val developerName = "Matt Hicks"
   val developerURL = "http://matthicks.com"
 
-  val sbtVersion = "0.13.11"
-  val scalaVersions = List("2.12.0-M4", "2.11.8")
-  val scalaVersion = "2.11.8"
+  val sbtVersion = "0.13.13"
+  val scalaVersions = List("2.12.1", "2.11.8")
+  val scalaVersion = "2.12.1"
 }
 
 object Dependencies {
-  val scribe = "1.2.6"
-  val undertow = "1.4.7.Final"
-  val uPickle = "0.4.1"
-  val scalaTest = "3.0.0-M16-SNAP4"
-  val metaRx = "0.1.8-cyclical"
+  val scribe = "1.3.2"
+  val undertow = "1.4.8.Final"
+  val uPickle = "0.4.4"
+  val scalaTest = "3.0.1"
   val scalaJSDOM = "0.9.1"
+  val reactify = "1.3.6-SNAPSHOT"
 }
 
 object HyperscalaCrossType extends org.scalajs.sbtplugin.cross.CrossType {

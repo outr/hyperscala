@@ -139,7 +139,7 @@ class HTMLParser(input: InputStream) {
   private var tagStart = -1
   private var tagEnd = -1
 
-  private val open = new mutable.Stack[OpenTag]
+  private var open = List.empty[OpenTag]
   private var tags = Set.empty[OpenTag]
 
   @tailrec
@@ -191,7 +191,7 @@ class HTMLParser(input: InputStream) {
     case OpenTagRegex(tagName, attributes) => {
       val a = parseAttributes(attributes)
       val tag = OpenTag(tagName, a, tagStart, tagEnd, close = None)
-      open.push(tag)
+      open = tag :: open
     }
   }
 
@@ -232,7 +232,8 @@ class HTMLParser(input: InputStream) {
     if (open.isEmpty) {
       throw new RuntimeException(s"Missing close tag for $tagName!")
     }
-    val t = open.pop()
+    val t = open.head
+    open = open.tail
     if (t.tagName.equalsIgnoreCase(tagName)) {
       t
     } else {

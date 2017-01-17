@@ -8,7 +8,6 @@ object ExampleServer {
   val server = Server(ExampleApplication)
   server.config.host := "0.0.0.0"
   server.config.port := 8080
-  server.config.session.domain := Some(".asuscomm.com")
 
   def session: ExampleSession = ExampleSession()
 

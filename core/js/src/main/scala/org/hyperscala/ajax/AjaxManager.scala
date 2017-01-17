@@ -3,7 +3,6 @@ package org.hyperscala.ajax
 import com.outr.scribe.Logging
 import org.scalajs.dom.XMLHttpRequest
 import org.scalajs.dom.raw.FormData
-import pl.metastack.metarx.{StateChannel, Var}
 
 import scala.collection.immutable.Queue
 import scala.concurrent.Future

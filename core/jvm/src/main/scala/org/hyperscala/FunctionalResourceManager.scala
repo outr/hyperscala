@@ -13,7 +13,7 @@ import io.undertow.server.{HttpHandler, HttpServerExchange}
 import io.undertow.util.{ByteRange, CanonicalPathUtils, DateUtils, ETagUtils, Headers, Methods, StatusCodes}
 import org.xnio.{FileChangeCallback, FileChangeEvent, OptionMap, Xnio}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class FunctionalResourceManager(val server: Server) extends ResourceManager {
   private var listeners = Set.empty[ResourceChangeListener]
@@ -159,14 +159,14 @@ trait PathResourceMapping extends ResourceMapping {
 
     fileSystemWatcher.watchPath(new File(base), new FileChangeCallback {
       override def handleChanges(changes: java.util.Collection[FileChangeEvent]): Unit = resourceManager.synchronized {
-        val events = changes.collect {
+        val events = changes.asScala.collect {
           case change if change.getFile.getAbsolutePath.startsWith(base) => {
             val path = change.getFile.getAbsolutePath.substring(base.length)
             new ResourceChangeEvent(path, ResourceChangeEvent.Type.valueOf(change.getType.name()))
           }
-        }
+        }.toList
         if (events.nonEmpty) {
-          resourceManager.fire(events)
+          resourceManager.fire(events.asJava)
         }
       }
     })
@@ -222,9 +222,7 @@ class FunctionalResourceHandler(resourceManager: FunctionalResourceManager) exte
               resourceResultOption match {
                 case Some(resourceResult) => {
                   val resource = resourceResult.resource
-                  if (resource.isDirectory) {
-                    throw new RuntimeException(s"Directories not currently supported: ${exchange.getRelativePath}")
-                  } else if (exchange.getRelativePath.endsWith("/")) {
+                  if (resource.isDirectory || exchange.getRelativePath.endsWith("/")) {
                     exchange.setStatusCode(StatusCodes.NOT_FOUND)
                     exchange.endExchange()
                   } else {

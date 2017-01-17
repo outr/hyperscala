@@ -1,9 +1,9 @@
 package org.hyperscala.ajax
 
+import com.outr.reactify.{StateChannel, Var}
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.ext.AjaxException
-import pl.metastack.metarx.{StateChannel, Var}
 
 import scala.concurrent.{Future, Promise}
 

@@ -50,7 +50,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
     webSocket.onclose = (evt: CloseEvent) => {
       logger.info(s"WebSocket connection closed")
       window.setTimeout(() => {
-        window.location.reload()
+        window.location.reload(flag = true)
       }, 5000)
     }
     webSocket.onmessage = (evt: MessageEvent) => {
@@ -98,7 +98,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
     })
 
     // Listen for screen changes
-    screen.attach(screenChanged)
+    screen.attachAndFire(screenChanged)
   }
 
   def pushURL(url: URL, force: Boolean = false): Unit = if (document.location.href != url.toString || force) app.siteType match {
@@ -139,7 +139,7 @@ class ClientConnection(val app: WebApplication, val initialURL: URL) extends Con
   }
 
   private def screenChanged(newScreen: BaseScreen): Unit = {
-    logger.debug(s"screenChanged: $newScreen from $previous")
+    logger.info(s"screenChanged: $newScreen from $previous")
     if (!previous.contains(newScreen)) {
       previous match {
         case Some(scrn) => scrn match {

@@ -4,6 +4,7 @@ import java.io.File
 import java.net.URI
 import java.util
 
+import com.outr.reactify.{Channel, Var}
 import io.undertow.protocols.ssl.UndertowXnioSsl
 import io.undertow.server.DefaultByteBufferPool
 import io.undertow.util.Headers
@@ -13,9 +14,8 @@ import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage
 import org.hyperscala.communication.Communication
 import org.hyperscala.util.SSLUtil
 import org.xnio.{OptionMap, Options, Xnio}
-import pl.metastack.metarx.{Channel, Var}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class CommunicationClient(uri: URI,
                           keyStoreFile: Option[File] = None,
@@ -47,7 +47,7 @@ class CommunicationClient(uri: URI,
       .setClientNegotiation(new WebSocketClientNegotiation(null, null) {
         override def beforeRequest(headers: util.Map[String, util.List[String]]): Unit = {
           authorization.foreach { auth =>
-            headers.put(Headers.AUTHORIZATION_STRING, List(auth))
+            headers.put(Headers.AUTHORIZATION_STRING, List(auth).asJava)
           }
         }
       })

@@ -1,5 +1,6 @@
 package org.hyperscala.communication.server
 
+import com.outr.reactify.Channel
 import io.undertow.Handlers
 import io.undertow.util.Headers
 import io.undertow.websockets.WebSocketConnectionCallback
@@ -7,7 +8,6 @@ import io.undertow.websockets.core.{AbstractReceiveListener, BufferedTextMessage
 import io.undertow.websockets.spi.WebSocketHttpExchange
 import org.hyperscala.communication.Communication
 import org.hyperscala.{Handler, Server}
-import pl.metastack.metarx.Channel
 
 class CommunicationServer(path: String,
                           authorization: WebSocketHttpExchange => Option[String] = (exchange: WebSocketHttpExchange) => None

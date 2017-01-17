@@ -1,16 +1,13 @@
 package org.hyperscala
 
+import com.outr.reactify.Channel
 import com.outr.scribe.Logging
 import org.hyperscala.manager.ApplicationManager
-import pl.metastack.metarx.Channel
-
 import org.hyperscala.manager._
 
 import scala.language.experimental.macros
 
 abstract class WebApplication(val siteType: SiteType) extends BaseApplication with Logging {
-  Channel.ValidateCyclical = false
-
   protected[hyperscala] var picklers = Vector.empty[Pickler[_]]
   private var _screens = Vector.empty[Screen]
   private[hyperscala] var screensByName = Map.empty[String, Screen]
