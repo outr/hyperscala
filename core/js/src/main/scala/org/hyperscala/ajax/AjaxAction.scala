@@ -16,12 +16,16 @@ class AjaxAction(request: AjaxRequest) {
   def cancelled: StateChannel[Boolean] = request.cancelled
 
   private[ajax] def start(manager: AjaxManager): Unit = {
-    _state := ActionState.Running
-    future.onComplete { result =>
-      _state := ActionState.Finished
+    if (!cancelled()) {
+      _state := ActionState.Running
+      future.onComplete { result =>
+        _state := ActionState.Finished
+        manager.remove(this)
+      }
+      request.send()
+    } else {
       manager.remove(this)
     }
-    request.send()
   }
 
   // TODO: dequeue if not already running

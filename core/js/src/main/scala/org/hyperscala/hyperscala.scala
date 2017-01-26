@@ -2,29 +2,22 @@ package org
 
 import com.outr.scribe.Logging
 import org.hyperscala.manager.ClientConnection
-import org.scalajs.dom._
-import org.scalajs.dom.ext._
 import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.{DOMList, Element, document, html}
 
 import scala.language.implicitConversions
 
-package object hyperscala extends Logging {
-  def byTag[T <: Element](tagName: String): Vector[T] = {
-    document.getElementsByTagName(tagName).toVector.map(_.asInstanceOf[T])
-  }
-  def byClass[T <: Element](className: String): Vector[T] = {
-    document.getElementsByClassName(className).toVector.map(_.asInstanceOf[T])
+package object hyperscala extends ExtendedElement(None) with Logging {
+  def bySelector[T <: Element](selectors: String, root: Option[Element] = None): Vector[T] = {
+    root.map(_.querySelectorAll(selectors)).getOrElse(document.querySelectorAll(selectors)).toVector.asInstanceOf[Vector[T]]
   }
 
-  def getById[T <: Element](id: String): Option[T] = Option(document.getElementById(id).asInstanceOf[T])
+  def firstBySelector[T <: Element](selectors: String, root: Option[Element] = None): Option[T] = {
+    bySelector[T](selectors, root).headOption
+  }
 
-  def byId[T <: Element](id: String): T = getById[T](id) match {
-    case Some(t) => t
-    case None => {
-      val message = s"Unable to find element by id '$id'."
-      logger.error(message)
-      throw new RuntimeException(message)
-    }
+  def oneBySelector[T <: Element](selectors: String, root: Option[Element] = None): T = {
+    firstBySelector[T](selectors, root).getOrElse(throw new RuntimeException(s"Unable to find element by selector: $selectors."))
   }
 
   implicit def connection2ClientConnection(connection: Connection): ClientConnection = connection.asInstanceOf[ClientConnection]
@@ -38,13 +31,7 @@ package object hyperscala extends Logging {
     }
   }
 
-  implicit class ElementExtras(e: Element) {
-    def byTag[T <: Element](tagName: String): Vector[T] = {
-      e.getElementsByTagName(tagName).toVector.map(_.asInstanceOf[T])
-    }
-    def byClass[T <: Element](className: String): Vector[T] = {
-      e.getElementsByClassName(className).toVector.map(_.asInstanceOf[T])
-    }
+  implicit class ElementExtras(e: Element) extends ExtendedElement(Some(e)) {
     def parentByTag[T <: HTMLElement](tagName: String): Option[T] = findParentRecursive[T](e.asInstanceOf[HTMLElement], (p: HTMLElement) => {
       p.tagName == tagName
     })
@@ -73,4 +60,13 @@ package object hyperscala extends Logging {
       list.item(position)
     }
   }
+}
+
+class ExtendedElement(element: Option[Element]) {
+  import hyperscala._
+
+  def byTag[T <: Element](tagName: String): Vector[T] = bySelector[T](tagName, element)
+  def byClass[T <: Element](className: String): Vector[T] = bySelector[T](s".$className", element)
+  def getById[T <: Element](id: String): Option[T] = firstBySelector[T](s"#$id", element)
+  def byId[T <: Element](id: String): T = oneBySelector[T](s"#$id", element)
 }
